@@ -194,10 +194,18 @@ app.get('/users/mantenimiento', checkNotAuthenticated, (req, res) => {
   res.render('mantenimiento', { user: req.user.name, role:req.user.role_name }); 
 });
 
+app.get('/users/dash', checkNotAuthenticated, (req, res) => { 
+  res.render('dash', { user: req.user.name , role:req.user.role_name}); 
+});
+
 
 
 //ACCESO A LOS PORTALES POR DISTRITO 
 //para los usurarios root
+
+app.get('/users/dash', checkNotAuthenticated, checkRole('root'), (req, res) => {
+  res.render('dash', { user: req.user.name, role:req.user.role_name });
+});
 
 app.get('/users/geoportD1', checkNotAuthenticated, checkRole('root'), (req, res) => {
   res.render('distritos/geoportD1', { user: req.user.name, role:req.user.role_name });
