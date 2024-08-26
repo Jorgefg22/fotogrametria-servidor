@@ -16,7 +16,6 @@ const guardarRegistroDescarga = require('./guardarRegistroDescarga');// Importa 
 const { Console } = require('console');
 const { format } = require('date-fns');
 
-
 initializePassport(passport);
 app.use(express.urlencoded({ extended: false }));
 app.engine('html', ejs.renderFile); // Establece el motor de plantillas para archivos ".html"
@@ -69,17 +68,15 @@ app.get('/lector', checkNotAuthenticated, checkRole('lector'), (req, res) => {
 
 app.get('/users/geoport', checkNotAuthenticated, (req, res) => {
   console.log(req.user.role_name)
-  res.render('geoport', { user: req.user.name, role:req.user.role_name});
+  res.render('geoport', { user: req.user.name, role: req.user.role_name });
 });
 
 
 app.get('/users/logout', (req, res) => {
-  // req.logout();
   //res.render('index', { message: 'You have logged out successfully' });
   req.logout(function (err) {
     if (err) {
       console.error(err);
-
     }
     // Redirige al usuario a la página principal u otra página después de cerrar sesión
     res.redirect('/users/login');
@@ -148,15 +145,96 @@ app.post('/users/register', async (req, res) => {
   }
 });
 
-app.post(
-  '/users/login',
-  passport.authenticate('local', {
+app.post('/users/login',passport.authenticate('local', {
     successRedirect: '/users/geoport',
-   // successRedirect: '/users/mantenimiento',
+    // successRedirect: '/users/mantenimiento',
     failureRedirect: '/users/login',
     failureFlash: true,
   })
 );
+
+//rutas de la bandeja de entrada y configuraciones 
+// Enviar mensaje
+app.post('/messages', checkNotAuthenticated, async (req, res) => {
+  const { receiver_id, content, grilla } = req.body; // Añadir grid si es necesario
+  const sender_id = req.user.id;
+  const timestamp = new Date(); // Capturar la fecha y hora actual
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO messages (sender_id, receiver_id, content, grilla, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [sender_id, receiver_id, content, grilla, timestamp] // Pasar el timestamp al query
+    );
+    res.redirect('/users/geoport');
+    // res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al enviar el mensaje:', err);
+    res.status(500).send('Error al enviar el mensaje');
+  }
+});
+
+// Obtener mensajes (bandeja de entrada)
+app.get('/messages', checkNotAuthenticated, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT m.*, u.name as sender_name 
+       FROM messages m 
+       JOIN users u ON m.sender_id = u.id 
+       WHERE m.receiver_id = 2 
+       ORDER BY m.timestamp DESC`
+    );
+    
+
+      result.rows.forEach(row => {
+        for (const key in row) {
+          if (row[key] instanceof Date) {
+            row[key] = format(row[key], 'yyyy-MM-dd HH:mm:ss.SSS');
+          }
+        }
+      });
+  
+    res.json(result.rows);
+    
+  } catch (err) {
+    console.error('Error al obtener los mensajes:', err);
+    res.status(500).send('Error al obtener los mensajes');
+  }
+});
+
+// Marcar mensaje como leído
+app.put('/messages/:id/read', checkNotAuthenticated, async (req, res) => {
+  const messageId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      'UPDATE messages SET read = TRUE WHERE id = $1 AND receiver_id = $2 RETURNING *',
+      [messageId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('Mensaje no encontrado o no autorizado');
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al marcar el mensaje como leído:', err);
+    res.status(500).send('Error al marcar el mensaje como leído');
+  }
+});
+
+// Ruta para formulario de enviar mensaje
+app.get('/users/send-message', checkNotAuthenticated, (req, res) => {
+  console.log(req.user.role_name)
+  res.render('send-message', { user: req.user.name, role: req.user.role_name });
+});
+// Ruta para bandeja de entrada
+app.get('/users/inbox', checkNotAuthenticated, (req, res) => {
+  console.log(req.user.role_name)
+  res.render('inbox', { user: req.user.name, role: req.user.role_name });
+});
 
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
@@ -172,113 +250,107 @@ function checkNotAuthenticated(req, res, next) {
   res.redirect('/users/login');
 }
 
-
-
 // redirect  
-app.get('/users/21', checkNotAuthenticated, (req, res) => { 
-  res.render('21', { user: req.user.name , role:req.user.role_name}); 
+app.get('/users/21', checkNotAuthenticated, (req, res) => {
+  res.render('21', { user: req.user.name, role: req.user.role_name });
 });
-app.get('/users/help2', checkNotAuthenticated, (req, res) => { 
-  res.render('help2', { user: req.user.name, role:req.user.role_name }); 
-});
-
-app.get('/users/lospinos', checkNotAuthenticated, (req, res) => { 
-  res.render('lospinos', { user: req.user.name, role:req.user.role_name }); 
+app.get('/users/help2', checkNotAuthenticated, (req, res) => {
+  res.render('help2', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportpinos', checkNotAuthenticated, (req, res) => { 
-  res.render('geoportpinos', { user: req.user.name, role:req.user.role_name }); 
+app.get('/users/lospinos', checkNotAuthenticated, (req, res) => {
+  res.render('lospinos', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/mantenimiento', checkNotAuthenticated, (req, res) => { 
-  res.render('mantenimiento', { user: req.user.name, role:req.user.role_name }); 
+app.get('/users/geoportpinos', checkNotAuthenticated, (req, res) => {
+  res.render('geoportpinos', { user: req.user.name, role: req.user.role_name });
 });
 
+app.get('/users/mantenimiento', checkNotAuthenticated, (req, res) => {
+  res.render('mantenimiento', { user: req.user.name, role: req.user.role_name });
+});
 
+app.get('/users/dash', checkNotAuthenticated, (req, res) => {
+  res.render('dash', { user: req.user.name, role: req.user.role_name });
+});
 
 //ACCESO A LOS PORTALES POR DISTRITO 
 //para los usurarios root
+app.get('/users/dash', checkNotAuthenticated, checkRole('root'), (req, res) => {
+  res.render('dash', { user: req.user.name, role: req.user.role_name });
+});
 
 app.get('/users/geoportD1', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportD1', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD2', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportD2', { user: req.user.name , role:req.user.role_name});
+  res.render('distritos/geoportD2', { user: req.user.name, role: req.user.role_name });
 });
 app.get('/users/geoportD3', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportD3', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD3', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD4', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportD4', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD4', { user: req.user.name, role: req.user.role_name });
 });
 app.get('/users/geoportD6', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportD6', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD6', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD7', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportD7', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD7', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportDLL', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('distritos/geoportDLL', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportDLL', { user: req.user.name, role: req.user.role_name });
 });
 
-//para los usuarios admin
 app.get('/users/geoportD1', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportD1', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD2', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportD2', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD2', { user: req.user.name, role: req.user.role_name });
 });
 app.get('/users/geoportD3', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportD3', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD3', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD4', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportD4', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD4', { user: req.user.name, role: req.user.role_name });
 });
 app.get('/users/geoportD6', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportD6', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD6', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD7', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportD7', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportD7', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportDLL', checkNotAuthenticated, checkRole('admin'), (req, res) => {
-  res.render('distritos/geoportLL', { user: req.user.name, role:req.user.role_name });
+  res.render('distritos/geoportLL', { user: req.user.name, role: req.user.role_name });
 });
-
-
-
-
-
-
 
 // Nueva ruta para descargar archivos y registrar la descarga
 app.get('/users/descargar/:nombreArchivo', checkNotAuthenticated, (req, res) => {
-  const nombreArchivo =  req.params.nombreArchivo;
+  const nombreArchivo = req.params.nombreArchivo;
   console.log(nombreArchivo)
   const rutaArchivo = path.resolve(__dirname, 'public/ORTOFOTOS', nombreArchivo); // Ajusta esta ruta a la ubicación real de tus archivos
-  
+
   //console.log(rutaArchivo)
   if (!fs.existsSync(rutaArchivo)) {
-  
     return res.status(404).send('Archivo no encontrado.');
   }
-  
   const registroDescarga = {
-    usuario_id: req.user ? req.user.id : null,  
+    usuario_id: req.user ? req.user.id : null,
     ip: req.ip,
     nombre_archivo: nombreArchivo,
     tamano_archivo: fs.statSync(rutaArchivo).size,
     fecha_hora: new Date(),
     resultado: 'Iniciado'
   };
-  
+
   res.download(rutaArchivo, async (err) => {
     if (err) {
       registroDescarga.resultado = 'Fallido';
@@ -291,26 +363,15 @@ app.get('/users/descargar/:nombreArchivo', checkNotAuthenticated, (req, res) => 
   });
 });
 
-
 // Ruta para servir el archivo HTML con el formulario de descarga
 app.get('/descargar-archivo', checkNotAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'descargar-archivo.html'));
 });
 
-
-/*app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM descargas WHERE usuario_id = $1', [req.user.id]);
-    res.render('descargados', { descargas: result.rows });
-  } catch (err) {
-    console.error('Error al obtener las descargas:', err);
-    res.status(500).send('Error al obtener las descargas');
-  }
-});*/
 app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM descargas WHERE usuario_id = $1', [req.user.id]);
-    
+
     // Convertir las fechas al formato 'YYYY-MM-DD HH:mm:ss.SSS'
     result.rows.forEach(row => {
       for (const key in row) {
@@ -319,15 +380,14 @@ app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
         }
       }
     });
-    
-  //  console.log(result.rows);
+
+    //  console.log(result.rows);
     res.json(result.rows); // Enviar datos en formato JSON
   } catch (err) {
     console.error('Error al obtener las descargas:', err);
     res.status(500).send('Error al obtener las descargas');
   }
 });
-
 
 let port = process.env.PORT;
 if (port == null || port == '') {

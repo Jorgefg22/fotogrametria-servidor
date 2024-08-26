@@ -1,5 +1,5 @@
 let map = L.map('map').setView([-17.403868804926827, -66.03924367573562], 13)
-
+// numeroGrilla = "";
 //Agregar tilelAyer mapa base desde openstreetmap
 /*L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">Geoinformatica Catastral</a> contributors'
@@ -12,35 +12,8 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   attribution: 'Map data ©2023 Google' // Atribución de los datos del mapa
 }).addTo(map);
 
-/*fetch('/leaflet/grilla_2023.geojson')
-  .then(response => response.json())
-  .then(data => {
-    L.geoJSON(data, {
 
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.id && feature.properties.distrito) {
-          var statuslev= ""; 
-          var fechalev= ""; 
-
-          if (feature.properties.estado_levantamiento) {
-            statuslev ="Levantamiento de grilla Completado";
-          }else{
-            statuslev = "Grilla en proceso de levantamiento"
-          }
-
-          if (feature.properties.Fecha_Levantamiento== null) {
-            fechalev = ""
-          }else{
-            fechalev = "<p>Fecha de levantamiento: "+feature.properties.Fecha_Levantamiento+"</p>"
-          }
-
-          layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito + '</p><p>Grilla numero: ' + feature.properties.numero_grilla + '</p><p>Estado: ' + statuslev + '</p>'+fechalev+'</div><div style="text-align: center;"><a href="/ORTOMOSAICO2023/ECW_D' + feature.properties.distrito + '/' + feature.properties.numero_grilla + '.ecw" download="' + feature.properties.numero_grilla + '.ecw" class="btn btn-primary text-white btn-sm" role="button">Ortomosaico 2D</a> <button class="btn btn-warning btn-sm" id="btnAgregarScript" onclick="addscript('+feature.properties.numero_grilla+')">Nube de Puntos 3D</button></div>');
-          
-        }
-      }
-    }).addTo(map);
-  });-*/
-var grilla2024 = 'http://10.0.38.17:8080/geoserver/fotogrametria_sacaba/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=fotogrametria_sacaba%3AGrilla%20Area%20Urbana%202024&maxFeatures=500&outputFormat=application%2Fjson&srsName=EPSG:4326'
+var grilla2024 = 'http://10.0.38.17:8080/geoserver/fotogrametria_sacaba/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=fotogrametria_sacaba%3AGrilla_Area_Urbana_2024&maxFeatures=500&outputFormat=application%2Fjson&srsName=EPSG:4326'
 fetch(grilla2024)
   .then(response => response.json())
   .then(data => {
@@ -82,19 +55,25 @@ fetch(grilla2024)
           } else if (feature.properties.estado_acumulativo == 4) {
             statuslev = "publicado"
           }
+
           // feature.properties.estado_levantamiento ? "Levantamiento de grilla Completado" : "Grilla en proceso de levantamiento";
-          var fechalev = "<p>Fecha de levantamiento: "+feature.properties.fecha_levantamiento+"</p>";
+          var fechalev = "<p>Fecha de levantamiento: " + feature.properties.fecha_levantamiento + "</p>";
           //var filename = "D"+feature.properties.distrito+"_"+feature.properties.numero_grilla+".ecw";
           var filename = feature.properties.texto + ".ecw";
           var buton2d = '';
           var buton3d = '';
+          var btnsoliciud = '';
+          //numeroGrilla = feature.properties.texto;
 
           if (feature.properties.estado_acumulativo == 4) {
             buton2d = '<a href="/users/descargar/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Ortomosaico 2D</a>';
             buton3d = '<button class="btn btn-warning btn-sm" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Nube de Puntos 3D</button>';
           }
+          if (feature.properties.estado_acumulativo == 0) {
+            btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev('+feature.properties.texto+')">Solicitar Levantamiento</button>'
+          }
 
-          layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: ' + feature.properties.texto + '</p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + '</div>');
+          layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: <label id="numgrilla" >' + feature.properties.texto + '</label></p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
 
         }
 
@@ -225,6 +204,7 @@ function addNametocircle() {
 
   var role = document.getElementById('role').innerText;
   const div = document.getElementById('dropdown');
+  
   if (role === 'admin' || role === 'root') {
     div.style.display = 'block';
   } else {
@@ -232,9 +212,6 @@ function addNametocircle() {
   }
 
 }
-
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('descargasModal');
@@ -340,16 +317,83 @@ fetch('/leaflet/distritos_admin.geojson')
   .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
 
 
-  var legend = L.control({position: 'bottomright'});
+var legend = L.control({ position: 'bottomright' });
 
-  legend.onAdd = function(map) {
-      var div = L.DomUtil.create('div', 'legend');
-      div.innerHTML += '<h4>Leyenda</h4>';
-      div.innerHTML += '<i style="background: #ff540b"></i><span>Grilla en Levantamiento</span><br>';
-      div.innerHTML += '<i style="background: #fdec03"></i><span>Grilla en Procesamiento</span><br>';
-      div.innerHTML += '<i style="background: #1eca00"></i><span>Grilla en Post Procesamiento</span><br>';
-      div.innerHTML += '<i style="background: #0c45d6"></i><span>Grilla Completada Publicado</span><br>';
-      return div;
-  };
+legend.onAdd = function (map) {
+  var div = L.DomUtil.create('div', 'legend');
+  div.innerHTML += '<h4>Leyenda</h4>';
+  div.innerHTML += '<i style="background: #ff540b"></i><span>Grilla en Levantamiento</span><br>';
+  div.innerHTML += '<i style="background: #fdec03"></i><span>Grilla en Procesamiento</span><br>';
+  div.innerHTML += '<i style="background: #1eca00"></i><span>Grilla en Post Procesamiento</span><br>';
+  div.innerHTML += '<i style="background: #0c45d6"></i><span>Grilla Completada Publicado</span><br>';
+  return div;
+};
+
+legend.addTo(map);
+
+
+/*fetch('/messages')
+    .then(response => response.json())
+    .then(messages => {
+      const messageList = document.getElementById('messages');
+      messages.forEach(message => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `De: ${message.sender_name} - ${message.content} - ${message.timestamp}`;
+        messageList.appendChild(listItem);
+      });
+    })
+    .catch(error => console.error('Error al obtener los mensajes:', error));*/
+
+
+
+fetch('/messages')
+  .then(response => response.json())
+  .then(messages => {
+    const messageTableBody = document.getElementById('messages');
+    messages.forEach(message => {
+      const tableRow = document.createElement('tr');
+
+      // Columna "De"
+      const senderCell = document.createElement('td');
+      senderCell.textContent = message.sender_name;
+      tableRow.appendChild(senderCell);
+
+      // Columna "Mensaje"
+      const contentCell = document.createElement('td');
+      contentCell.textContent = message.content;
+      tableRow.appendChild(contentCell);
+
+      // Columna "Fecha"
+      const timestampCell = document.createElement('td');
+      timestampCell.textContent = message.timestamp;
+      tableRow.appendChild(timestampCell);
+
+      // Columna "Grid"
+      const grillaCell = document.createElement('td');
+      grillaCell.textContent = message.grilla; // Asegúrate de que `grid` esté disponible en los datos de `message`
+      tableRow.appendChild(grillaCell);
+
+      // Añadir la fila a la tabla
+      messageTableBody.appendChild(tableRow);
+    });
+  })
+  .catch(error => console.error('Error al obtener los mensajes:', error));
+
+
+
+
+function addGrillaSolev(numeroGrilla) {
+
+  var select = document.getElementById("grilla");
+
+  // Cambia el valor de la opción seleccionada
+  var nuevoValor = numeroGrilla;
+  var nuevoTexto = "Grilla " + numeroGrilla;
+  select.options[select.selectedIndex].value = nuevoValor;
+  select.options[select.selectedIndex].text = nuevoTexto;
+
+  // Asegura que la nueva opción esté seleccionada
+  select.value = nuevoValor;
+  console.log("el numero de grilla es " + numeroGrilla);
   
-  legend.addTo(map);
+}
