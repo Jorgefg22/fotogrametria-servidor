@@ -297,6 +297,13 @@ function checkNotAuthenticated(req, res, next) {
 app.get('/users/21', checkNotAuthenticated, (req, res) => {
   res.render('21', { user: req.user.name, role: req.user.role_name });
 });
+//auxiliar
+app.get('/users/22', checkNotAuthenticated, (req, res) => {
+  res.render('22', { user: req.user.name, role: req.user.role_name });
+});
+app.get('/users/23', checkNotAuthenticated, (req, res) => {
+  res.render('23', { user: req.user.name, role: req.user.role_name });
+});
 app.get('/users/help2', checkNotAuthenticated, (req, res) => {
   res.render('help2', { user: req.user.name, role: req.user.role_name });
 });
