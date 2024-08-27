@@ -355,7 +355,8 @@ app.get('/users/descargar/:nombreArchivo', checkNotAuthenticated, (req, res) => 
     if (err) {
       registroDescarga.resultado = 'Fallido';
       await guardarRegistroDescarga(registroDescarga);
-      res.status(500).send("Error al descargar el archivo.");
+      //res.status(500).send("Error al descargar el archivo.");
+      res.render('geoport', { user: req.user.name, role: req.user.role_name });
     } else {
       registroDescarga.resultado = 'Éxito';
       await guardarRegistroDescarga(registroDescarga);
