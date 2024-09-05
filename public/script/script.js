@@ -70,7 +70,7 @@ fetch(grilla2024)
             buton3d = '<button class="btn btn-warning btn-sm" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Nube de Puntos 3D</button>';
           }
           if (feature.properties.estado_acumulativo == 0) {
-            btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev('+feature.properties.texto+')">Solicitar Levantamiento</button>'
+            btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
           }
 
           layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: <label id="numgrilla" >' + feature.properties.texto + '</label></p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
@@ -204,7 +204,7 @@ function addNametocircle() {
 
   var role = document.getElementById('role').innerText;
   const div = document.getElementById('dropdown');
-  
+
   if (role === 'admin' || role === 'root') {
     div.style.display = 'block';
   } else {
@@ -243,9 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-
-
 var puntosDeInteresLayer = "";
+var puntosDeInteresLayercota = "";
 
 fetch('/leaflet/area_urbana.geojson')
   .then(response => response.json())
@@ -271,14 +270,34 @@ fetch('/leaflet/area_urbana.geojson')
 
     });
 
-    /* Crear un objeto para las capas de superposición
-    var overlayLayers = {
-      'Area Urbana': puntosDeInteresLayer,
+  })
+  .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
 
-    };
+  //otro
+  fetch('/leaflet/lineaCota.geojson')
+  .then(response => response.json())
+  .then(data => {
+    // Crear una capa GeoJSON con el archivo cargado
+    puntosDeInteresLayercota = L.geoJSON(data, {
 
-    // Añadir el control de capas al mapa
-    L.control.layers(null, overlayLayers).addTo(map);*/
+
+      style: function (feature) {
+        // Define el color del polígono según la propiedad 'estado_levantamiento'
+        return {
+          fillColor: '#9a9fa3bd', // Cambia el color dependiendo de la propiedad 'estado_levantamiento'
+          weight: 5, // Grosor del borde
+          color: '#cd3685', // Color del borde
+          fillOpacity: 0.5 // Opacidad del relleno
+        };
+      },
+      onEachFeature: function (feature, layer) {
+        if (feature.properties && feature.properties.area) {
+          layer.bindPopup("<h4>Limite COTA 2750 m.s.n.m. (P.N.T.)</h4>");
+        }
+      }
+
+    });
+
   })
   .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
 
@@ -309,7 +328,8 @@ fetch('/leaflet/distritos_admin.geojson')
     // Crear un objeto para las capas de superposición
     var overlayLayers = {
       'Area Urbana': puntosDeInteresLayer,
-      'Distrios': puntosDeInteresLayer2
+      'Distrios': puntosDeInteresLayer2,
+      'Limite Cota':puntosDeInteresLayercota
 
     };
     L.control.layers(null, overlayLayers).addTo(map);
@@ -330,21 +350,6 @@ legend.onAdd = function (map) {
 };
 
 legend.addTo(map);
-
-
-/*fetch('/messages')
-    .then(response => response.json())
-    .then(messages => {
-      const messageList = document.getElementById('messages');
-      messages.forEach(message => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `De: ${message.sender_name} - ${message.content} - ${message.timestamp}`;
-        messageList.appendChild(listItem);
-      });
-    })
-    .catch(error => console.error('Error al obtener los mensajes:', error));*/
-
-
 
 fetch('/messages')
   .then(response => response.json())
@@ -395,5 +400,5 @@ function addGrillaSolev(numeroGrilla) {
   // Asegura que la nueva opción esté seleccionada
   select.value = nuevoValor;
   console.log("el numero de grilla es " + numeroGrilla);
-  
+
 }
