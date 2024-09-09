@@ -236,6 +236,38 @@ app.get('/users/inbox', checkNotAuthenticated, (req, res) => {
   res.render('inbox', { user: req.user.name, role: req.user.role_name });
 });
 
+
+
+
+
+
+// Ruta para mostrar el gráfico con el porcentaje de material 3
+// Ruta para obtener el porcentaje de material 3
+app.get('/porcentaje-material', async (req, res) => {
+  try {
+    const result = await pool.query(`
+        SELECT material,
+        COUNT(*) AS cantidad,
+        (COUNT(*) * 100 / (SELECT COUNT(*) FROM "InfraestructuraVial".vias_poligonos)) AS porcentaje
+        FROM "InfraestructuraVial".vias_poligonos
+        GROUP BY material
+        ORDER BY material;
+    `);
+ 
+    const porcentajes = result.rows.map(row => ({
+        material: row.material,
+        cantidad: row.cantidad,
+        porcentaje: parseFloat(row.porcentaje.toFixed(2)) // Limita los decimales a 2
+    }));
+
+    res.json(porcentajes);
+} catch (err) {
+    console.error('Error ejecutando la consulta', err);
+    res.status(500).send('Error en el servidor');
+}
+});
+
+
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return res.redirect('/users/geoport');
@@ -269,6 +301,9 @@ app.get('/users/geoportpinos', checkNotAuthenticated, (req, res) => {
 app.get('/users/mantenimiento', checkNotAuthenticated, (req, res) => {
   res.render('mantenimiento', { user: req.user.name, role: req.user.role_name });
 });
+app.get('/users/geoportVias', checkNotAuthenticated, (req, res) => {
+  res.render('geoportVias', { user: req.user.name, role: req.user.role_name });
+});
 
 app.get('/users/dash', checkNotAuthenticated, (req, res) => {
   res.render('dash', { user: req.user.name, role: req.user.role_name });
@@ -282,6 +317,9 @@ app.get('/users/dash', checkNotAuthenticated, checkRole('root'), (req, res) => {
 
 app.get('/users/geoportD1', checkNotAuthenticated, checkRole('root'), (req, res) => {
   res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
+});
+app.get('/users/geoportVias', checkNotAuthenticated, checkRole('root'), (req, res) => {
+  res.render('geoportVias', { user: req.user.name, role: req.user.role_name });
 });
 
 app.get('/users/geoportD2', checkNotAuthenticated, checkRole('root'), (req, res) => {
