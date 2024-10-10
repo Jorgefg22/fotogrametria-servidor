@@ -14,101 +14,6 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
 
 
 var grilla2024 = 'http://10.0.38.17:8080/geoserver/fotogrametria_sacaba/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=fotogrametria_sacaba%3AGrilla_Area_Urbana_2024&maxFeatures=500&outputFormat=application%2Fjson&srsName=EPSG:4326'
-fetch(grilla2024)
-  .then(response => response.json())
-  .then(data => {
-    let geojsonLayer = L.geoJSON(data, {
-      style: function (feature) {
-        // Define el color del polígono según la propiedad 'estado_levantamiento'
-        let fillColor;
-
-        // Primer if para determinar el color de relleno
-        if (feature.properties.estado_acumulativo == 0) {
-          fillColor = '#ababab';
-        } else if (feature.properties.estado_acumulativo == 1) {
-          fillColor = '#ff540b';
-        } else if (feature.properties.estado_acumulativo == 2) {
-          fillColor = '#fdec03';
-        } else if (feature.properties.estado_acumulativo == 3) {
-          fillColor = '#1eca00';
-        } else if (feature.properties.estado_acumulativo == 4) {
-          fillColor = '#0c45d6';
-        }
-
-        // Retornar el objeto de estilo
-        return {
-          fillColor: fillColor, // Utiliza el color determinado por el if anterior
-          weight: 2, // Grosor del borde
-          color: '#0d6efd', // Color del borde
-          fillOpacity: 0.5 // Opacidad del relleno
-        };
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.distrito_a) {
-          var statuslev = "";
-          if (feature.properties.estado_acumulativo == 1) {
-            statuslev = "Levantamiento"
-          } else if (feature.properties.estado_acumulativo == 2) {
-            statuslev = "procesamiento"
-          } else if (feature.properties.estado_acumulativo == 3) {
-            statuslev = " post procesamiento"
-          } else if (feature.properties.estado_acumulativo == 4) {
-            statuslev = "publicado"
-          }
-
-          // feature.properties.estado_levantamiento ? "Levantamiento de grilla Completado" : "Grilla en proceso de levantamiento";
-          var fechalev = "<p>Fecha de levantamiento: " + feature.properties.fecha_levantamiento + "</p>";
-          //var filename = "D"+feature.properties.distrito+"_"+feature.properties.numero_grilla+".ecw";
-          var filename = feature.properties.texto + ".ecw";
-          var buton2d = '';
-          var buton3d = '';
-          var btnsoliciud = '';
-          //numeroGrilla = feature.properties.texto;
-
-          if (feature.properties.estado_acumulativo == 4) {
-            buton2d = '<a href="/users/descargar/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Ortomosaico 2D</a>';
-            buton3d = '<button class="btn btn-warning btn-sm" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Nube de Puntos 3D</button>';
-          }
-          if (feature.properties.estado_acumulativo == 0) {
-            btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
-          }
-
-          layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: <label id="numgrilla" >' + feature.properties.texto + '</label></p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
-
-        }
-
-        let center = layer.getBounds().getCenter();
-        let label = L.marker(center, {
-          icon: L.divIcon({
-            className: 'label',
-            html: feature.properties.texto,
-            iconSize: [40, 20]
-          })
-        });
-
-        // Agregar el label al layer
-        layer.label = label;
-      }
-    }).addTo(map);
-
-    map.on('zoomend', function () {
-      let zoom = map.getZoom();
-      geojsonLayer.eachLayer(function (layer) {
-        if (zoom >= 15) {
-          if (!map.hasLayer(layer.label)) {
-            map.addLayer(layer.label);
-          }
-        } else {
-          if (map.hasLayer(layer.label)) {
-            map.removeLayer(layer.label);
-          }
-        }
-      });
-    });
-    // Ejecutar el evento una vez para establecer el estado inicial
-    map.fire('zoomend');
-
-  });
 
 document.getElementById('fileInput').addEventListener('change', function (e) {
   var file = e.target.files[0];
@@ -245,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 var puntosDeInteresLayer = "";
 var puntosDeInteresLayercota = "";
+var  geojsonLayer  = "";
 
 fetch('/leaflet/area_urbana.geojson')
   .then(response => response.json())
@@ -272,6 +178,109 @@ fetch('/leaflet/area_urbana.geojson')
 
   })
   .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
+
+//prueba geoport
+
+fetch('/leaflet/geoportlocal.geojson')
+  .then(response => response.json())
+  .then(data => {
+     geojsonLayer = L.geoJSON(data, {
+      style: function (feature) {
+        // Define el color del polígono según la propiedad 'estado_levantamiento'
+        let fillColor;
+
+        // Primer if para determinar el color de relleno
+        if (feature.properties.estado_acumulativo == 0) {
+          fillColor = '#ababab';
+        } else if (feature.properties.estado_acumulativo == 1) {
+          fillColor = '#ff540b';
+        } else if (feature.properties.estado_acumulativo == 2) {
+          fillColor = '#fdec03';
+        } else if (feature.properties.estado_acumulativo == 3) {
+          fillColor = '#1eca00';
+        } else if (feature.properties.estado_acumulativo == 4) {
+          fillColor = '#0c45d6';
+        }
+
+        // Retornar el objeto de estilo
+        return {
+          fillColor: fillColor, // Utiliza el color determinado por el if anterior
+          weight: 2, // Grosor del borde
+          color: '#0d6efd', // Color del borde
+          fillOpacity: 0.5 // Opacidad del relleno
+        };
+      },
+      onEachFeature: function (feature, layer) {
+        if (feature.properties && feature.properties.distrito_a) {
+          var statuslev = "";
+          if (feature.properties.estado_acumulativo == 1) {
+            statuslev = "Levantamiento"
+          } else if (feature.properties.estado_acumulativo == 2) {
+            statuslev = "procesamiento"
+          } else if (feature.properties.estado_acumulativo == 3) {
+            statuslev = " post procesamiento"
+          } else if (feature.properties.estado_acumulativo == 4) {
+            statuslev = "publicado"
+          }
+
+          // feature.properties.estado_levantamiento ? "Levantamiento de grilla Completado" : "Grilla en proceso de levantamiento";
+          var fechalev = "<p>Fecha de levantamiento: " + feature.properties.fecha_levantamiento + "</p>";
+          //var filename = "D"+feature.properties.distrito+"_"+feature.properties.numero_grilla+".ecw";
+          var filename = feature.properties.texto + ".ecw";
+          var buton2d = '';
+          var buton3d = '';
+          var btnsoliciud = '';
+          //numeroGrilla = feature.properties.texto;
+
+          if (feature.properties.estado_acumulativo == 4) {
+            buton2d = '<a href="/users/descargar/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Ortomosaico 2D</a>';
+            buton3d = '<button class="btn btn-warning btn-sm" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Nube de Puntos 3D</button>';
+          }
+          if (feature.properties.estado_acumulativo == 0) {
+            btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
+          }
+
+          layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: <label id="numgrilla" >' + feature.properties.texto + '</label></p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
+
+        }
+
+        let center = layer.getBounds().getCenter();
+        let label = L.marker(center, {
+          icon: L.divIcon({
+            className: 'label',
+            html: feature.properties.texto,
+            iconSize: [40, 20]
+          })
+        });
+
+        // Agregar el label al layer
+        layer.label = label;
+      }
+    }).addTo(map);
+
+    map.on('zoomend', function () {
+      let zoom = map.getZoom();
+      geojsonLayer.eachLayer(function (layer) {
+        if (zoom >= 15) {
+          if (!map.hasLayer(layer.label)) {
+            map.addLayer(layer.label);
+          }
+        } else {
+          if (map.hasLayer(layer.label)) {
+            map.removeLayer(layer.label);
+          }
+        }
+      });
+    });
+    // Ejecutar el evento una vez para establecer el estado inicial
+    map.fire('zoomend');
+
+  });
+
+
+
+
+
 
   //otro
   fetch('/leaflet/lineaCota.geojson')
@@ -329,7 +338,8 @@ fetch('/leaflet/distritos_admin.geojson')
     var overlayLayers = {
       'Area Urbana': puntosDeInteresLayer,
       'Distrios': puntosDeInteresLayer2,
-      'Limite Cota':puntosDeInteresLayercota
+      'Limite Cota':puntosDeInteresLayercota,
+      'geoport': geojsonLayer 
 
     };
     L.control.layers(null, overlayLayers).addTo(map);
