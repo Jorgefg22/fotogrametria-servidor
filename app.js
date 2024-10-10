@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const { Pool } = require('pg');
 const { pool } = require('./config');
 const ejs = require('ejs');
 const bcrypt = require('bcrypt');
@@ -34,6 +35,15 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+
+
+const poolSegundaDB = new Pool({
+  user: 'postgres',
+  host: '10.0.38.17', 
+  database: 'bdesi',
+  password: 'Catastrosacaba2024',
+  port: 5432, 
+});
 
 app.get('/', (req, res) => {
   res.render('login');
@@ -236,37 +246,54 @@ app.get('/users/inbox', checkNotAuthenticated, (req, res) => {
   res.render('inbox', { user: req.user.name, role: req.user.role_name });
 });
 
-
-
-
-
-
 // Ruta para mostrar el gráfico con el porcentaje de material 3
+const materialMap = {
+  0: 'Sin registro',
+  1: 'Tierra',
+  2: 'Ripio',
+  3: 'Pavic-Enladrillado',
+  4: 'Piedra',
+  5: 'Loseta',
+  6: 'Adoquin',
+  7: 'Asfalto',
+  8: 'Pavimento Rigido',
+};
 // Ruta para obtener el porcentaje de material 3
 app.get('/porcentaje-material', async (req, res) => {
   try {
-    const result = await pool.query(`
-        SELECT material,
-        COUNT(*) AS cantidad,
-        (COUNT(*) * 100 / (SELECT COUNT(*) FROM "InfraestructuraVial".vias_poligonos)) AS porcentaje
-        FROM "InfraestructuraVial".vias_poligonos
-        GROUP BY material
-        ORDER BY material;
+    const result = await poolSegundaDB.query(`
+      SELECT material,
+      COUNT(*) AS cantidad,
+      (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM "InfraestructuraVial".vias_poligonos)) AS porcentaje
+      FROM "InfraestructuraVial".vias_poligonos
+      GROUP BY material
+      ORDER BY material;
     `);
- 
-    const porcentajes = result.rows.map(row => ({
-        material: row.material,
+    const porcentajes = result.rows.map(row => {
+      let porcentaje = parseFloat(row.porcentaje);
+
+      if (isNaN(porcentaje)) {
+        porcentaje = 0;
+      } else {
+        porcentaje = porcentaje.toFixed(2);
+      }
+
+      // Usar el mapa para cambiar el número de material por su descripción
+      const descripcionMaterial = materialMap[row.material] || 'Desconocido';
+
+      return {
+        material: descripcionMaterial, // Aquí se usa la descripción en lugar del número
         cantidad: row.cantidad,
-        porcentaje: parseFloat(row.porcentaje.toFixed(2)) // Limita los decimales a 2
-    }));
+        porcentaje: porcentaje
+      };
+    });
 
     res.json(porcentajes);
-} catch (err) {
-    console.error('Error ejecutando la consulta', err);
+  } catch (err) {
+    console.error('Error ejecutando la consulta en la segunda base de datos', err);
     res.status(500).send('Error en el servidor');
-}
+  }
 });
-
 
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
