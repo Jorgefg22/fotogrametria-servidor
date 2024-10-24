@@ -65,7 +65,7 @@
 
         <ul class="nav justify-content-end">
             <li class="nav-item">
-              <a class="nav-link" href="#">Link2</a>
+                <a class="nav-link" href="#"><i class="fa-solid fa-left-long fa-2xl" style="color: #ededed;" onclick="window.location.href='/users/geoport'"></i></a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#"><i class="fa-regular fa-user fa-2xl" style="color: #ededed;" data-bs-toggle="offcanvas"
@@ -94,7 +94,7 @@
                 </div>
 
                 <div id="info-general">
-                    <p>Haz clic en un polígono para ver mas detalles aquí.</p>
+                    
 
                 </div>
 
@@ -210,37 +210,35 @@
                                                             <ul class="list-group">
                                                             <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Calzada de Via</li>
                                                             </ul>
-                                                            <input type="text" class="form-control" id="nombre_via"  placeholder="Ingrese la calzada de Via">
+                                                            <input type="text" class="form-control" id="calzadaVia"  placeholder="Ingrese la calzada de Via">
                                                         </div>
                                                          <div class="form-group">
                                                             <ul class="list-group">
                                                             <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Clase de espacio</li>
                                                             </ul>
-                                                            <input type="text" class="form-control" id="clase_espacio"  placeholder="Ingrese la clase de espacio">
+                                                            <input type="text" class="form-control" id="clasespacio"  placeholder="Ingrese la clase de espacio">
                                                         </div>
                                                          <div class="form-group">
                                                             <ul class="list-group">
                                                             <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Tipo de Via</li>
                                                             </ul>
-                                                            <input type="text" class="form-control" id="tipo_via"  placeholder="Ingrese tipo de Via">
+                                                            <input type="text" class="form-control" id="tipoVia"  placeholder="Ingrese tipo de Via">
                                                         </div>
                                                          <div class="form-group">
                                                             <ul class="list-group">
                                                             <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Acera</li>
                                                             </ul>
-                                                            <input type="text" class="form-control" id="acera_via"  placeholder="Ingrese la Acera">
+                                                            <input type="text" class="form-control" id="aceravia"  placeholder="Ingrese la Acera">
                                                         </div>
-
                                                          <div class="form-group">
                                                             <ul class="list-group">
-                                                            <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Servicio de Agua</li>
+                                                            <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Tipo de espacio</li>
                                                             </ul>
-                                                            <select id="role" name="role" class="form-control" required>
-                                                            <option value="" disabled selected>Seleccionar Rol </option>
+                                                            <select id="tipoEspacio" name="tipo" class="form-control" required>
+                                                            <option value="" disabled selected>Seleccionar clase </option>
                                                             <option value="publico">Publico</option>
                                                             <option value="privado">privado</option>
                                                             </select>
-
                                                         </div>
                                                          <div class="form-group">
                                                             <ul class="list-group">
@@ -249,43 +247,43 @@
 
                                                             <ul class="list-group">
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="agua" value="" aria-label="...">
                                                                  Agua
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="energiaElectrica" value="" aria-label="...">
                                                                 Energia Electrica
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="alcantarillado"value="" aria-label="...">
                                                                 Alcantarillado
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="gasdomiciliario" value="" aria-label="...">
                                                                 Gas Domiciliario
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="telefono" value="" aria-label="...">
                                                                Telefono
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="internetadsi" value="" aria-label="...">
                                                                Internet ADSI
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="internetfibopt"value="" aria-label="...">
                                                               Internet fibra Optica
                                                             </li>
                                                             <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="recojoBas" value="" aria-label="...">
                                                                Recojo de Basura
                                                             </li>
                                                              <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="alumbradopub" value="" aria-label="...">
                                                                Alumbrado Publico
                                                             </li>
                                                              <li class="list-group-item">
-                                                                <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
+                                                                <input class="form-check-input me-1" type="checkbox" id="transpub" value="" aria-label="...">
                                                                Transporte publico
                                                             </li>
                                                             </ul>
