@@ -45,6 +45,7 @@ public/pointclouds
 public/pointclouds2
 public/ORTOFOTOS
 public/ORTOFOTOS2
+public/ORTOFOTOS_OT
 
 ·
 # TypeScript v1 declaration files
@@ -73,7 +74,7 @@ typings/
 
 # Yarn Integrity file
 .yarn-integrity
-
+.env
 
 
 # parcel-bundler cache (https://parceljs.org/)

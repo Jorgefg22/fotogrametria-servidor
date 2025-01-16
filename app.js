@@ -45,6 +45,15 @@ const poolSegundaDB = new Pool({
   port: 5432, 
 });
 
+const poolTerceraDB = new Pool({
+  user: 'postgres',
+  host: '10.0.38.17', 
+  database: 'bdec',
+  password: 'Catastrosacaba2024',
+  port: 5432, 
+});
+
+
 app.get('/', (req, res) => {
   res.render('login');
 });
@@ -342,58 +351,61 @@ app.get('/users/dash', checkNotAuthenticated, checkRole('root'), (req, res) => {
   res.render('dash', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD1', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportD1', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
 });
-app.get('/users/geoportVias', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportVias', checkNotAuthenticated, (req, res) => {
   res.render('geoportVias', { user: req.user.name, role: req.user.role_name });
 });
+app.get('/users/geoportPredios', checkNotAuthenticated, (req, res) => {
+  res.render('geoportPredios', { user: req.user.name, role: req.user.role_name });
+});
 
-app.get('/users/geoportD2', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportD2', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD2', { user: req.user.name, role: req.user.role_name });
 });
-app.get('/users/geoportD3', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportD3', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD3', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD4', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportD4', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD4', { user: req.user.name, role: req.user.role_name });
 });
-app.get('/users/geoportD6', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportD6', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD6', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD7', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportD7', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD7', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportDLL', checkNotAuthenticated, checkRole('root'), (req, res) => {
+app.get('/users/geoportDLL', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportDLL', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD1', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportD1', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD2', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportD2', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD2', { user: req.user.name, role: req.user.role_name });
 });
-app.get('/users/geoportD3', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportD3', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD3', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD4', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportD4', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD4', { user: req.user.name, role: req.user.role_name });
 });
-app.get('/users/geoportD6', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportD6', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD6', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportD7', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportD7', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD7', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/geoportDLL', checkNotAuthenticated, checkRole('admin'), (req, res) => {
+app.get('/users/geoportDLL', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportLL', { user: req.user.name, role: req.user.role_name });
 });
 
@@ -454,6 +466,131 @@ app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
     res.status(500).send('Error al obtener las descargas');
   }
 });
+
+//grilla 24
+
+app.get('/grilla24', async (req, res) => {
+  try {
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, texto, distrito_a, levantamiento_drone, procesamiento, post_procesamiento, publicacion_geoportal, fecha_levantamiento,estado_acumulativo FROM "fotogrametria".grilla2024` ;
+    const result = await poolTerceraDB.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            id: row.id,
+            texto:row.texto,
+            distrito_a: row.distrito_a,
+            levantamiento_drone: row.levantamiento_drone,
+            procesamiento: row.procesamiento,
+            post_procesamiento: row.post_procesamiento,
+            publicacion_geoportal: row.publicacion_geoportal,
+            fecha_levantamiento: row.fecha_levantamiento,
+            estado_acumulativo: row.estado_acumulativo
+           
+          }
+        }))
+      };
+
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron grillas' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos en grillas' });
+  }
+});
+
+
+
+
+app.get('/poligonos', async (req, res) => {
+  try {
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a,distrito_c,distrito_a,clase,tipo_emp,ubicacion,temporal,fijo,fecha,direccion_,tecnico,
+      nro_tramit,zona,zonadr FROM "InfraestructuraVial".predios` ;
+    const result = await poolSegundaDB.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            id: row.id,
+            objectid: row.objectid,
+            codigo_cat: row.codigo_cat,
+            nro_inmueb: row.nro_inmueb,
+            distrito_a: row.distrito_a,
+            distrito_c: row.distrito_c,
+                 clase: row.clase,
+              tipo_emp: row.tipo_emp,
+             ubicacion: row.ubicacion,
+            temporal: row.temporal,
+            fijo: row.fijo,
+            fecha: row.fecha,
+            direccion_: row.direccion_,
+            tecnico: row.tecnico,
+            nro_tramit: row.nro_tramit,
+            zona: row.zona,
+            zonadr: row.zonadr  
+          }
+        }))
+      };
+
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron polígonos' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos' });
+  }
+});
+
+
+
+app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) => {
+  const nombreArchivo = req.params.nombreArchivo;
+  console.log(nombreArchivo)
+  const rutaArchivo = path.resolve(__dirname, 'public/ORTOFOTOS_OT', nombreArchivo); // Ajusta esta ruta a la ubicación real de tus archivos
+
+  //console.log(rutaArchivo)
+  if (!fs.existsSync(rutaArchivo)) {
+    return res.status(404).send('Archivo no encontrado.');
+  }
+  const registroDescarga = {
+    usuario_id: req.user ? req.user.id : null,
+    ip: req.ip,
+    nombre_archivo: nombreArchivo,
+    tamano_archivo: fs.statSync(rutaArchivo).size,
+    fecha_hora: new Date(),
+    resultado: 'Iniciado'
+  };
+
+  res.download(rutaArchivo, async (err) => {
+    if (err) {
+      registroDescarga.resultado = 'Fallido';
+      await guardarRegistroDescarga(registroDescarga);
+      //res.status(500).send("Error al descargar el archivo.");
+      res.render('geoport', { user: req.user.name, role: req.user.role_name });
+    } else {
+      registroDescarga.resultado = 'Éxito';
+      await guardarRegistroDescarga(registroDescarga);
+    }
+  });
+});
+
+
+
 
 let port = process.env.PORT;
 if (port == null || port == '') {

@@ -181,7 +181,7 @@ fetch('/leaflet/area_urbana.geojson')
 
 //prueba geoport
 
-fetch('/leaflet/geoportlocal.geojson')
+fetch('/grilla24')
   .then(response => response.json())
   .then(data => {
      geojsonLayer = L.geoJSON(data, {
@@ -200,9 +200,11 @@ fetch('/leaflet/geoportlocal.geojson')
           fillColor = '#1eca00';
         } else if (feature.properties.estado_acumulativo == 4) {
           fillColor = '#0c45d6';
+        }else if (feature.properties.estado_acumulativo == 10) {
+          fillColor = '#66a3d5';//348567
         }
 
-        // Retornar el objeto de estilo
+        // Retornar el objeto de estilo  #348567
         return {
           fillColor: fillColor, // Utiliza el color determinado por el if anterior
           weight: 2, // Grosor del borde
@@ -238,6 +240,9 @@ fetch('/leaflet/geoportlocal.geojson')
           }
           if (feature.properties.estado_acumulativo == 0) {
             btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
+          }
+          if (feature.properties.estado_acumulativo == 10) {
+             buton2d = '<a href="/users/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Descargar Ortomosaico O.T. 2D</a>';
           }
 
           layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: <label id="numgrilla" >' + feature.properties.texto + '</label></p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
@@ -338,8 +343,8 @@ fetch('/leaflet/distritos_admin.geojson')
     var overlayLayers = {
       'Area Urbana': puntosDeInteresLayer,
       'Distrios': puntosDeInteresLayer2,
-      'Limite Cota':puntosDeInteresLayercota,
-      'geoport': geojsonLayer 
+      'Limite Cota':puntosDeInteresLayercota
+      //geoport': geojsonLayer 
 
     };
     L.control.layers(null, overlayLayers).addTo(map);
@@ -356,6 +361,7 @@ legend.onAdd = function (map) {
   div.innerHTML += '<i style="background: #fdec03"></i><span>Grilla en Procesamiento</span><br>';
   div.innerHTML += '<i style="background: #1eca00"></i><span>Grilla en Post Procesamiento</span><br>';
   div.innerHTML += '<i style="background: #0c45d6"></i><span>Grilla Completada Publicado</span><br>';
+  div.innerHTML += '<i style="background: #66a3d5"></i><span>Grilla Ortomosaico O.T. </span><br>';
   return div;
 };
 

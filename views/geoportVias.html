@@ -47,10 +47,10 @@
                 <img src="/images/favicon.png" alt="" width="50px" height="50px" style="margin-left: 8px;">
               </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" style="margin-top:10px; color: white" active>Vias</a>
+              <a class="nav-link" href='/users/geoportPredios' style="margin-top:10px; color: white" active>Vias</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" style="margin-top:10px; color:white;">Predios</a>
+              <a class="nav-link" href='/users/geoportPredios' style="margin-top:10px; color:white;">Predios</a>
             </li>
           </ul>
 
@@ -333,7 +333,7 @@
 
         async function obtenerPorcentajeMaterial() {
             try {
-                const response = await fetch('http://localhost:5000/porcentaje-material');
+                const response = await fetch('  /porcentaje-material');
                 if (!response.ok) {
                     throw new Error('Error en la respuesta de la API');
                 }
