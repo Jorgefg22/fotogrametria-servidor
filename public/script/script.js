@@ -226,7 +226,9 @@ fetch('/grilla24')
           }
 
           // feature.properties.estado_levantamiento ? "Levantamiento de grilla Completado" : "Grilla en proceso de levantamiento";
-          var fechalev = "<p>Fecha de levantamiento: " + feature.properties.fecha_levantamiento + "</p>";
+
+          const soloFecha = new Date(feature.properties.fecha_levantamiento).toISOString().split('T')[0];
+          var fechalev = "<label>Fecha de levantamiento: " + soloFecha  + "</label>";
           //var filename = "D"+feature.properties.distrito+"_"+feature.properties.numero_grilla+".ecw";
           var filename = feature.properties.texto + ".ecw";
           var buton2d = '';
@@ -245,7 +247,7 @@ fetch('/grilla24')
              buton2d = '<a href="/users/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Descargar Ortomosaico O.T. 2D</a>';
           }
 
-          layer.bindPopup('<div> <img src="/images/adt.png"  width="300px" alt=""></div><div> <h6>Gobierno Autonomo Municipal de Sacaba</h6><p >Distrito: ' + feature.properties.distrito_a + '</p><p>Grilla numero: <label id="numgrilla" >' + feature.properties.texto + '</label></p><p>Estado: ' + statuslev + '</p>' + fechalev + '</div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
+          layer.bindPopup('<div> <img src="/images/adt.png" width="300px" alt=""></div><div><h6>Gobierno Autonomo Municipal de Sacaba</h6><ul><li>Distrito: ' + feature.properties.distrito_a + '</li> <li>Grilla numero: <label id="numgrilla">' + feature.properties.texto + '</label></li><li>Estado: ' + statuslev + '</li><li>' + fechalev + '</li></ul></div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
 
         }
 
