@@ -144,7 +144,7 @@
         // Cargar los datos GeoJSON
         var grilla2024 = 'http://10.0.38.17:8080/geoserver/Vias_Catastro/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Vias_Catastro%3Avias_poligonos&maxFeatures=20000&outputFormat=application%2Fjson&srsName=EPSG:4326';
 
-        fetch(grilla2024)
+        fetch('/vias24')
             .then(response => response.json())
             .then(data => {
                 // Agregar los datos GeoJSON al mapa y agregar el evento click

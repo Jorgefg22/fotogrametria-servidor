@@ -508,6 +508,48 @@ app.get('/grilla24', async (req, res) => {
 });
 
 
+// poligonos vias
+app.get('/vias24', async (req, res) => {
+  try {
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, distrito_c, distrito_a, cod_via, material, fecha_mate, nombre_via, perfil_via, calzada FROM "InfraestructuraVial".vias_poligonos` ;
+    const result = await poolSegundaDB.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            id: row.id,
+            distrito_c:row.distrito_c,
+            distrito_a: row.distrito_a,
+            cod_via: row.cod_via,
+            material: row.material,
+            fecha_mate: row.fecha_mate,
+            nombre_via: row.nombre_via,
+            perfil_via: row.perfil_via,
+            calzada: row.calzada
+           
+          }
+        }))
+      };
+
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron grillas' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos en grillas' });
+  }
+});
+
+
+
+
 
 
 app.get('/poligonos', async (req, res) => {
