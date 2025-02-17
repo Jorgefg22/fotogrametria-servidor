@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet con PDF</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <style>
+        #map { width: 600px; height: 500px; border: 1px solid black; }
+        .leaflet-popup-content button { margin-top: 5px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <button id="cerrarPopup" style="margin-top: 10px;" onclick="cerrarpopup()">Cerrar Popup</button>
+
+    <script>
+        const geojsonData = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "id": 1,
+                        "codigo_cat": "26-382-00018-000",
+                        "ubicacion": "TUSCAPUGIO",
+                        "zona": "5",
+                        "tecnico": "DANIEL DURAN"
+                    },
+                    "geometry": {
+                        "type": "MultiPolygon",
+                        "coordinates": [
+                            [
+                                [
+                                    [-66.079916, -17.426608],
+                                    [-66.079774, -17.426428],
+                                    [-66.079726, -17.426464],
+                                    [-66.079681, -17.426498],
+                                    [-66.079829, -17.426673],
+                                    [-66.079916, -17.426608]
+                                ]
+                            ]
+                        ]
+                    }
+                },{
+                    "type": "Feature",
+                    "properties": {
+                        "id": 2,
+                        "objectid": 176507,
+                        "codigo_cat": null,
+                        "nro_inmueb": null,
+                        "distrito_a": null,
+                        "distrito_c": null,
+                        "clase": null,
+                        "tipo_emp": null,
+                        "ubicacion": null,
+                        "temporal": null,
+                        "fijo": null,
+                        "fecha": null,
+                        "direccion_": null,
+                        "tecnico": null,
+                        "nro_tramit": null,
+                        "zona": null,
+                        "zonadr": null,
+                        "created_us": "SDE",
+                        "created_da": "2024-05-03",
+                        "last_edite": "SDE",
+                        "last_edi_1": "2024-05-03",
+                        "estado": null,
+                        "tipo_tram": null,
+                        "historico": 0,
+                        "mutacion_f": 0,
+                        "fecha_hist": null,
+                        "st_area_sh": 323.51912569000001,
+                        "st_length_": 78.975262509399997
+                    },
+                    "geometry": {
+                        "type": "MultiPolygon",
+                        "coordinates": [
+                            [
+                                [
+                                    [
+                                        -66.044895675357608,
+                                        -17.395253267810954
+                                    ],
+                                    [
+                                        -66.044792725826369,
+                                        -17.395290467879715
+                                    ],
+                                    [
+                                        -66.044882125673155,
+                                        -17.395526249032535
+                                    ],
+                                    [
+                                        -66.044983982821307,
+                                        -17.395491197060483
+                                    ],
+                                    [
+                                        -66.044895675357608,
+                                        -17.395253267810954
+                                    ]
+                                ]
+                            ]
+                        ]
+                    }
+                }
+            ]
+        };
+
+        // Inicializar el mapa
+        const map = L.map('map').setView([-17.4266, -66.0799], 18);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+        let drawnLayer = null;
+        let activePopup = null;  // Variable para almacenar el popup activo
+
+        // Agregar capa GeoJSON
+        const geojsonLayer = L.geoJSON(geojsonData, {
+            style: { color: "red", weight: 3, fillOpacity: 0.3 },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(`
+                    <b>Código Catastro:</b> ${feature.properties.codigo_cat || 'N/A'}<br>
+                    <b>Ubicación:</b> ${feature.properties.ubicacion || 'N/A'}<br>
+                    <b>Zona:</b> ${feature.properties.zona || 'N/A'}<br>
+                    <b>Técnico:</b> ${feature.properties.tecnico || 'N/A'}<br>
+                    <button onclick="generatePDF(${feature.properties.id})">Imprimir PDF</button>
+                `);
+
+                layer.on("popupopen", function (e) {
+                    activePopup = e.popup; // Guardar referencia al popup activo
+                });
+            }
+        }).addTo(map);
+
+        /*Función para cerrar el popup desde el botón externo
+        document.getElementById('cerrarPopup').addEventListener('click', function() {
+            if (activePopup) {
+                map.closePopup(activePopup);
+                activePopup = null;
+            }
+        });*/
+
+        function cerrarpopup(){
+            if (activePopup) {
+                map.closePopup(activePopup);
+                activePopup = null;
+            }
+        }
+
+        // Función para resaltar el polígono seleccionado
+        function highlightFeature(featureId) {
+            const feature = geojsonData.features.find(f => f.properties.id === featureId);
+            if (!feature) return;
+
+            if (drawnLayer) map.removeLayer(drawnLayer);
+
+            drawnLayer = L.geoJSON(feature, { style: { color: "blue", weight: 4, fillOpacity: 0.4 } }).addTo(map);
+            map.fitBounds(drawnLayer.getBounds());
+
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 500);
+        }
+
+        // Función para generar el PDF con la imagen del mapa y polígono
+        function generatePDF(featureId) {
+            const feature = geojsonData.features.find(f => f.properties.id === featureId);
+            if (!feature) return;
+            cerrarpopup()
+            highlightFeature(featureId);
+
+            setTimeout(() => {
+                domtoimage.toPng(document.getElementById('map')).then(function (dataUrl) {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+
+                    // Agregar texto al PDF
+                    doc.setFontSize(16);
+                    doc.text("Información del Predio", 10, 20);
+                    doc.setFontSize(12);
+                    doc.text(`Código Catastro: ${feature.properties.codigo_cat || 'N/A'}`, 10, 30);
+                    doc.text(`Ubicación: ${feature.properties.ubicacion || 'N/A'}`, 10, 40);
+                    doc.text(`Zona: ${feature.properties.zona || 'N/A'}`, 10, 50);
+                    doc.text(`Técnico: ${feature.properties.tecnico || 'N/A'}`, 10, 60);
+
+                    // Agregar la imagen del mapa al PDF
+                    doc.addImage(dataUrl, 'PNG', 10, 70, 180, 100);
+
+                    // Guardar el PDF
+                    doc.save(`Predio_${feature.properties.codigo_cat || 'N/A'}.pdf`);
+                }).catch(function (error) {
+                    console.error('Error generando imagen:', error);
+                });
+            }, 1500);
+        }
+    </script>
+
+</body>
+</html>
