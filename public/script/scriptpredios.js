@@ -30,14 +30,13 @@ fetch('/poligonos')
         if (feature.properties && feature.properties.id) {
           layer.bindPopup('<div><img src="/images/adt.png" width="300px" alt=""></div>' +
             '<div><h6>Gobierno Autonomo Municipal de Sacaba</h6>' +
-            '<p>Codigo Catastral: ' + feature.properties.codigo_cat + '</p>' +
-            '<p>Numero de Inmueble: ' + feature.properties.nro_inmueb + '</p>' +
-            '<p>Distrito Catastral: ' + feature.properties.distrito_c + '</p>' +
-            '<p>Distrito Administrativo: ' + feature.properties.distrito_a + '</p>' +
-            '<p>Nro de tramite: ' + feature.properties.nro_tramit + '</p>' +
-            '<p>Numero de zona: ' + feature.properties.zona + '</p>'+
-            '<h6>Subir una imagen para un Predio</h6><form action="/upload" method="post" enctype="multipart/form-data"><label>Código Catastro del Predio: </label><span id="codigo_cat_display">'+ feature.properties.codigo_cat +'</span><label for="image">Selecciona una imagen:</label><input type="file" id="image" name="image" required><br><input type="hidden" id="codigo_cat" name="codigo_cat" value="'+ feature.properties.codigo_cat +'"><button type="submit">Subir Imagen</button></form>'+
-          '<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">imagenes cargadas</button></p><div class="collapse" id="collapseExample"><div class="card card-body"><div><ul><% images.forEach(image => { %><li><a href="/image/<%= image.id %>"><%= image.nombre %></a></li><% }) %></ul><br> </div></div></div>');
+            '<ul><li>Codigo Catastral: ' + feature.properties.codigo_cat + '</li>' +
+            '<li>Numero de Inmueble: ' + feature.properties.nro_inmueb + '</li>' +
+            '<li>Distrito Catastral: ' + feature.properties.distrito_c + '</li>' +
+            '<li>Distrito Administrativo: ' + feature.properties.distrito_a + '</li>' +
+            '<li>Numero de zona: ' + feature.properties.zona + '</li></ul>');
+           // '<h6>Subir una imagen para un Predio</h6><form action="/upload" method="post" enctype="multipart/form-data"><label>Código Catastro del Predio: </label><span id="codigo_cat_display">'+ feature.properties.codigo_cat +'</span><label for="image">Selecciona una imagen:</label><input type="file" id="image" name="image" required><br><input type="hidden" id="codigo_cat" name="codigo_cat" value="'+ feature.properties.codigo_cat +'"><button type="submit">Subir Imagen</button></form>'+
+          //'<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">imagenes cargadas</button></p><div class="collapse" id="collapseExample"><div class="card card-body"><div><ul><% images.forEach(image => { %><li><a href="/image/<%= image.id %>"><%= image.nombre %></a></li><% }) %></ul><br> </div></div></div>');
 
         }
 
@@ -77,7 +76,7 @@ fetch('/poligonos')
 
 
 
-document.getElementById('fileInput').addEventListener('change', function (e) {
+/*document.getElementById('fileInput').addEventListener('change', function (e) {
   var file = e.target.files[0];
 
   if (!file) return;
@@ -124,7 +123,7 @@ document.getElementById('fileInput').addEventListener('change', function (e) {
   };
 
   reader.readAsText(file);
-});
+});*/
 
 
 var marker = L.marker([28.3949, 84.1240]).addTo(map);

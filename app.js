@@ -556,8 +556,8 @@ app.get('/poligonos', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a,distrito_c,distrito_a,clase,tipo_emp,ubicacion,temporal,fijo,fecha,direccion_,tecnico,
-      nro_tramit,zona,zonadr FROM "InfraestructuraVial".predios` ;
-    const result = await poolSegundaDB.query(query);
+      nro_tramit,zona,zonadr FROM "sicat".predios` ;
+    const result = await poolTerceraDB.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
