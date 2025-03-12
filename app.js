@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const { Pool } = require('pg');
-const { pool } = require('./config');
+const { pool, poolbdsi, poolbdec } = require('./config');
 const ejs = require('ejs');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
@@ -11,9 +11,7 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
 const initializePassport = require('./pswConfig');
-const { checkRole } = require('./middleware'); // Importa el middleware de verificación de roles
-
-const guardarRegistroDescarga = require('./guardarRegistroDescarga');// Importa la función para guardar registros
+const { checkRole, guardarRegistroDescarga } = require('./middleware'); // Importa el middleware de verificación de roles
 const { Console } = require('console');
 const { format } = require('date-fns');
 
@@ -36,24 +34,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
 
-
-const poolSegundaDB = new Pool({
-  user: 'postgres',
-  host: '10.0.38.17', 
-  database: 'bdesi',
-  password: 'Catastrosacaba2024',
-  port: 5432, 
-});
-
-const poolTerceraDB = new Pool({
-  user: 'postgres',
-  host: '10.0.38.17', 
-  database: 'bdec',
-  password: 'Catastrosacaba2024',
-  port: 5432, 
-});
-
-
 app.get('/', (req, res) => {
   res.render('login');
 });
@@ -63,10 +43,6 @@ app.get('/users/register', checkAuthenticated, (req, res) => {
 });
 app.get('/users/login', checkAuthenticated, (req, res) => {
   res.render('login');
-});
-
-app.get('/users/dashboard', checkNotAuthenticated, (req, res) => {
-  res.render('dashboard', { user: req.user.name });
 });
 
 //Rutas por roles de la base de datos
@@ -83,7 +59,6 @@ app.get('/editor', checkNotAuthenticated, checkRole('editor'), (req, res) => {
 app.get('/lector', checkNotAuthenticated, checkRole('lector'), (req, res) => {
   res.render('lector', { user: req.user.name });
 });
-
 
 app.get('/users/geoport', checkNotAuthenticated, (req, res) => {
   console.log(req.user.role_name)
@@ -164,12 +139,12 @@ app.post('/users/register', async (req, res) => {
   }
 });
 
-app.post('/users/login',passport.authenticate('local', {
-    successRedirect: '/users/geoport',
-    // successRedirect: '/users/mantenimiento',
-    failureRedirect: '/users/login',
-    failureFlash: true,
-  })
+app.post('/users/login', passport.authenticate('local', {
+  successRedirect: '/users/geoport',
+  // successRedirect: '/users/mantenimiento',
+  failureRedirect: '/users/login',
+  failureFlash: true,
+})
 );
 
 //rutas de la bandeja de entrada y configuraciones 
@@ -198,24 +173,24 @@ app.get('/messages', checkNotAuthenticated, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT m.*, u.name as sender_name 
+      `SELECT m.*, u.name as sende r_name 
        FROM messages m 
        JOIN users u ON m.sender_id = u.id 
        WHERE m.receiver_id = 2 
        ORDER BY m.timestamp DESC`
     );
-    
 
-      result.rows.forEach(row => {
-        for (const key in row) {
-          if (row[key] instanceof Date) {
-            row[key] = format(row[key], 'yyyy-MM-dd HH:mm:ss.SSS');
-          }
+
+    result.rows.forEach(row => {
+      for (const key in row) {
+        if (row[key] instanceof Date) {
+          row[key] = format(row[key], 'yyyy-MM-dd HH:mm:ss.SSS');
         }
-      });
-  
+      }
+    });
+
     res.json(result.rows);
-    
+
   } catch (err) {
     console.error('Error al obtener los mensajes:', err);
     res.status(500).send('Error al obtener los mensajes');
@@ -270,7 +245,7 @@ const materialMap = {
 // Ruta para obtener el porcentaje de material 3
 app.get('/porcentaje-material', async (req, res) => {
   try {
-    const result = await poolSegundaDB.query(`
+    const result = await poolbdsi.query(`
       SELECT material,
       COUNT(*) AS cantidad,
       (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM "InfraestructuraVial".vias_poligonos)) AS porcentaje
@@ -341,15 +316,8 @@ app.get('/users/geoportVias', checkNotAuthenticated, (req, res) => {
   res.render('geoportVias', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/dash', checkNotAuthenticated, (req, res) => {
-  res.render('dash', { user: req.user.name, role: req.user.role_name });
-});
-
 //ACCESO A LOS PORTALES POR DISTRITO 
 //para los usurarios root
-app.get('/users/dash', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('dash', { user: req.user.name, role: req.user.role_name });
-});
 
 app.get('/users/geoportD1', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
@@ -449,7 +417,6 @@ app.get('/descargar-archivo', checkNotAuthenticated, (req, res) => {
 app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM descargas WHERE usuario_id = $1', [req.user.id]);
-
     // Convertir las fechas al formato 'YYYY-MM-DD HH:mm:ss.SSS'
     result.rows.forEach(row => {
       for (const key in row) {
@@ -468,12 +435,11 @@ app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
 });
 
 //grilla 24
-
 app.get('/grilla24', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, texto, distrito_a, levantamiento_drone, procesamiento, post_procesamiento, publicacion_geoportal, fecha_levantamiento,estado_acumulativo FROM "fotogrametria".grilla2024` ;
-    const result = await poolTerceraDB.query(query);
+    const result = await poolbdec.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -484,7 +450,7 @@ app.get('/grilla24', async (req, res) => {
           geometry: JSON.parse(row.geom),  // GeoJSON Geometry
           properties: {
             id: row.id,
-            texto:row.texto,
+            texto: row.texto,
             distrito_a: row.distrito_a,
             levantamiento_drone: row.levantamiento_drone,
             procesamiento: row.procesamiento,
@@ -492,7 +458,7 @@ app.get('/grilla24', async (req, res) => {
             publicacion_geoportal: row.publicacion_geoportal,
             fecha_levantamiento: row.fecha_levantamiento,
             estado_acumulativo: row.estado_acumulativo
-           
+
           }
         }))
       };
@@ -507,13 +473,12 @@ app.get('/grilla24', async (req, res) => {
   }
 });
 
-
 // poligonos vias
 app.get('/vias24', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, distrito_c, distrito_a, cod_via, material, fecha_mate, nombre_via, perfil_via, calzada FROM "InfraestructuraVial".vias_poligonos` ;
-    const result = await poolSegundaDB.query(query);
+    const result = await poolbdsi.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -524,7 +489,7 @@ app.get('/vias24', async (req, res) => {
           geometry: JSON.parse(row.geom),  // GeoJSON Geometry
           properties: {
             id: row.id,
-            distrito_c:row.distrito_c,
+            distrito_c: row.distrito_c,
             distrito_a: row.distrito_a,
             cod_via: row.cod_via,
             material: row.material,
@@ -532,7 +497,7 @@ app.get('/vias24', async (req, res) => {
             nombre_via: row.nombre_via,
             perfil_via: row.perfil_via,
             calzada: row.calzada
-           
+
           }
         }))
       };
@@ -547,17 +512,12 @@ app.get('/vias24', async (req, res) => {
   }
 });
 
-
-
-
-
-
 app.get('/poligonos', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a,distrito_c,distrito_a,clase,tipo_emp,ubicacion,temporal,fijo,fecha,direccion_,tecnico,
       nro_tramit,zona,zonadr FROM "sicat".predios` ;
-    const result = await poolTerceraDB.query(query);
+    const result = await poolbdec.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -573,9 +533,9 @@ app.get('/poligonos', async (req, res) => {
             nro_inmueb: row.nro_inmueb,
             distrito_a: row.distrito_a,
             distrito_c: row.distrito_c,
-                 clase: row.clase,
-              tipo_emp: row.tipo_emp,
-             ubicacion: row.ubicacion,
+            clase: row.clase,
+            tipo_emp: row.tipo_emp,
+            ubicacion: row.ubicacion,
             temporal: row.temporal,
             fijo: row.fijo,
             fecha: row.fecha,
@@ -583,7 +543,7 @@ app.get('/poligonos', async (req, res) => {
             tecnico: row.tecnico,
             nro_tramit: row.nro_tramit,
             zona: row.zona,
-            zonadr: row.zonadr  
+            zonadr: row.zonadr
           }
         }))
       };
@@ -597,8 +557,6 @@ app.get('/poligonos', async (req, res) => {
     res.status(500).json({ error: 'Error al consultar la base de datos' });
   }
 });
-
-
 
 app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) => {
   const nombreArchivo = req.params.nombreArchivo;
@@ -630,9 +588,6 @@ app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) =
     }
   });
 });
-
-
-
 
 let port = process.env.PORT;
 if (port == null || port == '') {
