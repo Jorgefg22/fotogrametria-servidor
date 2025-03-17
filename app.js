@@ -173,24 +173,24 @@ app.get('/messages', checkNotAuthenticated, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT m.*, u.name as sende r_name 
+      `SELECT m.*, u.name as sender_name 
        FROM messages m 
        JOIN users u ON m.sender_id = u.id 
        WHERE m.receiver_id = 2 
        ORDER BY m.timestamp DESC`
     );
+    
 
-
-    result.rows.forEach(row => {
-      for (const key in row) {
-        if (row[key] instanceof Date) {
-          row[key] = format(row[key], 'yyyy-MM-dd HH:mm:ss.SSS');
+      result.rows.forEach(row => {
+        for (const key in row) {
+          if (row[key] instanceof Date) {
+            row[key] = format(row[key], 'yyyy-MM-dd HH:mm:ss.SSS');
+          }
         }
-      }
-    });
-
+      });
+  
     res.json(result.rows);
-
+    
   } catch (err) {
     console.error('Error al obtener los mensajes:', err);
     res.status(500).send('Error al obtener los mensajes');
