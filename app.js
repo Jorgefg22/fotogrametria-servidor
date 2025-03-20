@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
   res.render('login');
 });
 
-app.get('/users/register', checkAuthenticated, (req, res) => {
+app.get('/users/register', checkNotAuthenticated, (req, res) => {
   res.render('register');
 });
 app.get('/users/login', checkAuthenticated, (req, res) => {
@@ -153,7 +153,7 @@ app.post('/users/register', async (req, res) => {
                     throw err;
                   }
                   req.flash('success_msg', 'You are successfully registered');
-                  res.redirect('/users/login');
+                  res.redirect('/users/geoport');
                 }
               );
             }

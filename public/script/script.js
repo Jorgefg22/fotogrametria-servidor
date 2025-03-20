@@ -108,12 +108,18 @@ function addNametocircle() {
   console.log(primerCaracter);
 
   var role = document.getElementById('role').innerText;
-  const div = document.getElementById('dropdown');
+  let divdrop = document.getElementById('dropdown');
+  let divregister = document.getElementById('register-user');
+  if(role ==='root'){
+    divregister.style.display = 'block';
+  }else {
+    divregister.style.display = 'none';
+  }
 
   if (role === 'admin' || role === 'root') {
-    div.style.display = 'block';
+    divdrop.style.display = 'block';
   } else {
-    div.style.display = 'none';
+    divdrop.style.display = 'none';
   }
 
 }
