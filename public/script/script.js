@@ -1,5 +1,5 @@
 let map = L.map('map').setView([-17.403868804926827, -66.03924367573562], 13)
-// numeroGrilla = "";
+
 //Agregar tilelAyer mapa base desde openstreetmap
 /*L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">Geoinformatica Catastral</a> contributors'
@@ -98,7 +98,7 @@ function search() {
 };
 
 
-function addNametocircle() {
+/*function addNametocircle() {
 
   var usuario = document.getElementById('usuario').innerText;
   var textuser = document.getElementById('imagecircle');
@@ -108,21 +108,8 @@ function addNametocircle() {
   console.log(primerCaracter);
 
   var role = document.getElementById('role').innerText;
-  let divdrop = document.getElementById('dropdown');
-  let divregister = document.getElementById('register-user');
-  if(role ==='root'){
-    divregister.style.display = 'block';
-  }else {
-    divregister.style.display = 'none';
-  }
-
-  if (role === 'admin' || role === 'root') {
-    divdrop.style.display = 'block';
-  } else {
-    divdrop.style.display = 'none';
-  }
-
-}
+  addRegisterUser(role);
+}*/
 
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('descargasModal');

@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
   res.render('login');
 });
 
-app.get('/users/register', checkNotAuthenticated, (req, res) => {
+app.get('/users/register', checkNotAuthenticated,checkRole('root'), (req, res) => {
   res.render('register');
 });
 app.get('/users/login', checkAuthenticated, (req, res) => {
