@@ -60,11 +60,15 @@ async function verifyAcces(role) {
 
     if (role == "root") {
       addRegisterUser();
-    } else if (role == "root" || role == "admin") {
+    }
+     if (role == "root" || role == "admin") {
       addBandejaEntrada();
       addDistritos();
-    } else if (role == "root" || role == "admin" || role == "editor") {
+    } 
+    if (role == "root" || role == "admin" || role == "editor") {
+      console.log("antes del for")
       accesos.acces.forEach(acceso => {
+        console.log("entra al for")
         switch (acceso) {
           case "vias":
             addVias();
