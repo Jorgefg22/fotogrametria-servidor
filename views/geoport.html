@@ -65,17 +65,17 @@
 			<input type="file" id="fileInput" style="display: none;">
 
 		</div>
-		<div>
+		<div  data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="addNametocircle()" style="margin-right: 0.8%;">
+			
 			<label id="usuario" style="color: aliceblue;margin-bottom: 10px;">
 				<%= user %>
 			</label>
-			<i class="fa-regular fa-user fa-2xl" style="color: #ededed;" data-bs-toggle="offcanvas"
-				data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="addNametocircle()"></i>
+			<i class="fa-regular fa-user fa-2xl" style="color: #ededed;"></i>
 
-			<a title="cerrar sesion" style="margin-bottom: 10px; margin-right: 10px; " href="/users/logout">
+			<!--a title="cerrar sesion" style="margin-bottom: 10px; margin-right: 10px; " href="/users/logout">
 				<img src="/images/cerrar-sesion.png" title="cerrar sesion" alt="" height="20px" width="20px"
 					style="margin-bottom: 7px;">
-			</a>
+			</a-->
 			<!--h6 style="margin-left: 10px; color: aliceblue;"> <%= user %></h6-->
 		</div>
 
