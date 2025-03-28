@@ -1,5 +1,5 @@
 <%- include("partials/header"); -%>
-<div style="background-color: #27303b; border-radius: 15px; width: 300px;" class="text-center">
+<div style="background-color: #27303b; border-radius: 15px; width: 400px;" class="text-center">
   <img
     class="mb-4"
     src="/images/favicon.png"
@@ -23,7 +23,6 @@
       style="background-color: #27303b; border-color: #27303b; color: white;"
     />
 
-    <!-- Actualización: Cambio de Email por Username -->
     <label for="username" class="sr-only">Nombre de Usuario</label>
     <input
       type="text"
@@ -58,28 +57,36 @@
       style="background-color: #27303b; border-color: #27303b; color: white;"
     /><br />
 
- <!-- Agregando el campo de selección de rol -->
- <label for="role" class="sr-only">Rol</label>
- <select
-   id="role"
-   name="role"
-   class="form-control"
-   required
-   style="background-color: #27303b; border-color: #27303b; color: white;"
- >
-   <option value="" disabled selected>Seleccionar Rol</option>
-   <option value="admin">Administrador</option>
-   <option value="editor">Editor</option>
-   <option value="lector">Lector</option>
-   <option value="root">Root</option>
- </select><br />
+    <!-- Selección de Rol -->
+    <label for="role" class="sr-only">Rol</label>
+    <select
+      id="role"
+      name="role"
+      class="form-control"
+      required
+      style="background-color: #27303b; border-color: #27303b; color: white;"
+    >
+      <option value="" disabled selected>Seleccionar Rol</option>
+      <option value="admin">Administrador</option>
+      <option value="editor">Editor</option>
+      <option value="lector">Lector</option>
+      <option value="root">Root</option>
+    </select><br />
 
+    <!-- Checkboxes para Accesos -->
+    <h6 class="h6 mb-3 font-weight-normal" style="color: white;  border-bottom: 2px solid #093d8bc4;  ">ACCESOS</h6>
+    
+    <div class="" style=" color: rgb(185, 180, 180); ">
+      <label><input type="checkbox" name="acces" value="fotogrametria"> Fotogrametría</label>
+      <label><input type="checkbox" name="acces" value="vias"> Vías</label>
+      <label><input type="checkbox" name="acces" value="predios"> Predios</label>
+      <label><input type="checkbox" name="acces" value="cuencas"> Cuencas</label>
+    </div><br>
 
-    <input
-      type="submit"
+    <input type="submit"
       value="Register"
       class="btn btn-lg btn-primary btn-block"
-    ></input>
+    >
 
     <p class="help-block mb-3 text-muted">
       <% if (typeof errors != 'undefined') { %>
@@ -96,4 +103,3 @@
   </form>
 </div>
 
-<!--%- include("partials/footer"); -%-->
