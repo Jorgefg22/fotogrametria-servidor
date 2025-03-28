@@ -66,9 +66,8 @@ async function verifyAcces(role) {
       addDistritos();
     } 
     if (role == "root" || role == "admin" || role == "editor") {
-      console.log("antes del for")
+      
       accesos.acces.forEach(acceso => {
-        console.log("entra al for")
         switch (acceso) {
           case "vias":
             addVias();
