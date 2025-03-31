@@ -81,24 +81,21 @@
             </button>
             <input type="file" id="fileInput" style="display: none;">
 
-		</div>
-		<div  data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="addNametocircle()" style="margin-right: 0.8%;">
-			
-			<label id="usuario" style="color: aliceblue;margin-bottom: 10px;">
-				<%= user %>
-			</label>
-			<i class="fa-regular fa-user fa-2xl" style="color: #ededed;"></i>
+        </div>
+        <div>
+            <label id="usuario" style="color: aliceblue;margin-bottom: 10px;">
+                <%= user %>
+            </label>
+            <i class="fa-regular fa-user fa-2xl" style="color: #ededed;" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="addNametocircle()"></i>
 
-			<!--a title="cerrar sesion" style="margin-bottom: 10px; margin-right: 10px; " href="/users/logout">
-				<img src="/images/cerrar-sesion.png" title="cerrar sesion" alt="" height="20px" width="20px"
-					style="margin-bottom: 7px;">
-			</a-->
-			<!--h6 style="margin-left: 10px; color: aliceblue;"> <%= user %></h6-->
-		</div>
-
-
-	</nav>
-
+            <a title="cerrar sesion" style="margin-bottom: 10px; margin-right: 10px; " href="/users/logout">
+                <img src="/images/cerrar-sesion.png" title="cerrar sesion" alt="" height="20px" width="20px"
+                    style="margin-bottom: 7px;">
+            </a>
+            <!--h6 style="margin-left: 10px; color: aliceblue;"> <%= user %></h6-->
+        </div>
+    </nav>
 
     <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
         <div class="offcanvas-header" style="background-color: #08477b;">
@@ -136,29 +133,43 @@
                       opacity: 2;
                     ">
 
-			<div class="d-grid gap-2">
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal">
+                    Ver Descargas
+                </button>
+                
+                <div class="dropdown" id="dropdown" style="display: none;">
+                    
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1"
+                        data-bs-toggle="dropdown" aria-expanded="false" style="width: 100%;">
+                        Distritos
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1"
+                        style="width: 100%; text-align: center;">
+                        <li><a class="dropdown-item" href="/users/geoport">Vista General</a></li>
+                        <li><a class="dropdown-item" href="/users/geoportD2">Distrito - 2</a></li>
+                        <li><a class="dropdown-item" href="/users/geoportD3">Distrito - 3</a></li>
+                        <li><a class="dropdown-item" href="/users/geoportD4">Distrito - 4</a></li>
+                        <li><a class="dropdown-item" href="/users/geoportD6">Distrito - 6</a></li>
+                        <li><a class="dropdown-item" href="/users/geoportD7">Distrito - 7</a></li>
+                        <li><a class="dropdown-item" href="/users/geoportDLL">Distrito - LL</a></li>
+                    </ul>
+                    
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal3" style="width: 100%; margin-top: 10px;">
+                        Bandeja de entrada
+                    </button>
+                    <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="window.location.href='/users/geoportPredios'">
+                        Portal de vías y predios
+                    </button>       
+                </div>
 
-				<div id="register-user">
-				</div>
-
-				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal">
-					Ver Descargas
-				</button>
-				
-				<div class="dropdown" id="distritos">
-				</div>
-
-				<div id="bandeja_entrada">
-				</div>
-
-				<div id="portal_predios">
-				</div>
-
-				<div id="portal_vias">					
-				</div>
-				
-			</div>
-
+                <!--div class="solicitudes" id="solicitudes" style="display: none;">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal3" style="width: 100%;">
+                        Bandeja de entrada
+                    </button>
+                </div-->
+                
+            </div>
 
             <div>
                 <button onclick="window.location.href='/users/logout'"
@@ -278,7 +289,7 @@
         </div>
     </div>
       
-    <div id="sidebar" class="leaflet-sidebar" style="height: 95%;">
+    <div id="sidebar" class="leaflet-sidebar">
         <div class="leaflet-sidebar-tabs">
             <ul role="tablist">
                 <li><a href="#home" role="tab"><i class="fa fa-bars active"></i></a></li>
@@ -300,7 +311,6 @@
                 </div>
             </div>
 
-
             <div class="leaflet-sidebar-pane" id="autopan">
                 <h1 class="leaflet-sidebar-header">
                     Información Detallada
@@ -315,12 +325,15 @@
 
     <div id="map"></div>
 
-	<script src="/script/script.js"></script>
-	<script src="/script/script2.js"></script>
-	<script src="/script/functionbyroles.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-		crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" crossorigin=""></script>
+    <script src="/script/leaflet-sidebar.js"></script>
+    <script src="/script/scriptgeo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
+    <script>
+         </script>
 </body>
 
 </html>
