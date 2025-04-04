@@ -53,6 +53,14 @@ const poolTerceraDB = new Pool({
   port: 5432, 
 });
 
+const poolCuartaDB = new Pool({
+  user: 'postgres',
+  host: '10.0.38.17', 
+  database: 'bdemt',
+  password: 'Catastrosacaba2024',
+  port: 5432, 
+});
+
 
 app.get('/', (req, res) => {
   res.render('login');
@@ -102,67 +110,6 @@ app.get('/users/logout', (req, res) => {
   });
 });
 
-/*app.post('/users/register', async (req, res) => {
-  let { name, username, password, password_confirm, role } = req.body; // Añadir role
-  let errors = [];
-
-  if (!name || !username || !password || !password_confirm || !role) {
-    errors.push({ message: 'Please enter all fields correctly' });
-  }
-  if (password.length < 6) {
-    errors.push({ message: 'Password must be at least 6 characters long' });
-  }
-  if (password !== password_confirm) {
-    errors.push({ message: 'Passwords do not match' });
-  }
-  if (errors.length > 0) {
-    res.render('register', { errors, name, username, password, password_confirm, role });
-  } else {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    pool.query(
-      `SELECT * FROM users WHERE username = $1`,
-      [username],
-      (err, results) => {
-        if (err) {
-          console.log(err);
-        } if (results.rows.length > 0) {
-          return res.render('register', {
-            message: 'Username already registered'
-          });
-        } else {
-          pool.query(
-            `SELECT id FROM roles WHERE role_name = $1`,
-            [role],
-            (err, results) => {
-              if (err) {
-                throw err;
-              }
-              if (results.rows.length === 0) {
-                return res.render('register', {
-                  message: 'Role not found'
-                });
-              }
-              const roleId = results.rows[0].id;
-              pool.query(
-                `INSERT INTO users (name, username, password, role_id)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id, password`,
-                [name, username, hashedPassword, roleId],
-                (err, results) => {
-                  if (err) {
-                    throw err;
-                  }
-                  req.flash('success_msg', 'You are successfully registered');
-                  res.redirect('/users/geoport');
-                }
-              );
-            }
-          );
-        }
-      }
-    );
-  }
-});**/
 
 app.get('/users/accesos', checkNotAuthenticated, async (req, res) => {
   const { id } = req.params;
@@ -438,6 +385,9 @@ app.get('/users/geoportVias', checkNotAuthenticated, (req, res) => {
 app.get('/users/geoportPredios', checkNotAuthenticated, (req, res) => {
   res.render('geoportPredios', { user: req.user.name, role: req.user.role_name });
 });
+app.get('/users/geoportMTierra', checkNotAuthenticated, (req, res) => {
+  res.render('geoportMTierra', { user: req.user.name, role: req.user.role_name });
+});
 
 app.get('/users/geoportD2', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD2', { user: req.user.name, role: req.user.role_name });
@@ -676,6 +626,50 @@ app.get('/poligonos', async (req, res) => {
   }
 });
 
+
+//madre tierra
+app.get('/presas', async (req, res) => {
+  try {
+    const query = `
+      SELECT fid, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, cod, nombre, coord_este, coord_norte, lat, lon, cuenca_influencia, subcuenca ,rio, tipo_presa, tamanio, anio_construccion , proposito_uso FROM "gr_cuencas_presas".presa` ;
+    const result = await poolCuartaDB.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            cod: row.cod,
+            nombre:row.nombre,
+            coord_este: row.coord_este,
+            coord_norte: row.coord_norte,
+            procesamiento: row.procesamiento,
+            lat: row.lat,
+            lon: row.lon,
+            cuenca_influencia: row.cuenca_influencia,
+            subcuenca:row.subcuenca,
+            rio:row.rio,
+            tipo_presa:row.tipo_presa,
+            tamanio:row.tamanio,
+            anio_construccion:row.anio_construccion,
+            proposito_uso: row.proposito_uso
+           
+          }
+        }))
+      };
+
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron grillas' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos en grillas' });
+  }
+});
 
 
 app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) => {
