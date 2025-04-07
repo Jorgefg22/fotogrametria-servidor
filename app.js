@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const { Pool } = require('pg');
-const { pool } = require('./config');
+const { pool, poolbdsi,poolbdmt} = require('./config');
 const ejs = require('ejs');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
@@ -11,9 +11,9 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
 const initializePassport = require('./pswConfig');
-const { checkRole } = require('./middleware'); // Importa el middleware de verificación de roles
+const { checkRole, guardarRegistroDescarga } = require('./middleware'); // Importa el middleware de verificación de roles
 
-const guardarRegistroDescarga = require('./guardarRegistroDescarga');// Importa la función para guardar registros
+//const guardarRegistroDescarga = require('./guardarRegistroDescarga');// Importa la función para guardar registros
 const { Console } = require('console');
 const { format } = require('date-fns');
 
@@ -35,23 +35,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-
-
-const poolSegundaDB = new Pool({
-  user: 'postgres',
-  host: '10.0.38.17', 
-  database: 'bdesi',
-  password: 'Catastrosacaba2024',
-  port: 5432, 
-});
-
-const poolTerceraDB = new Pool({
-  user: 'postgres',
-  host: '10.0.38.17', 
-  database: 'bdec',
-  password: 'Catastrosacaba2024',
-  port: 5432, 
-});
 
 
 app.get('/', (req, res) => {
@@ -168,7 +151,7 @@ app.get('/users/accesos', checkNotAuthenticated, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`SELECT acces FROM users WHERE id = $1`, [req.user.id]);
+    const result = await pool.query(`SELECT acces FROM "learnerlogin".users WHERE id = $1`, [req.user.id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'User not found' });
@@ -210,13 +193,13 @@ app.post('/users/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Verificar si el username ya está registrado
-    const userCheck = await pool.query(`SELECT * FROM users WHERE username = $1`, [username]);
+    const userCheck = await pool.query(`SELECT * FROM "learnerlogin".users WHERE username = $1`, [username]);
     if (userCheck.rows.length > 0) {
       return res.render('register', { message: 'Username already registered' });
     }
 
     // Obtener el role_id a partir del nombre del rol
-    const roleResult = await pool.query(`SELECT id FROM roles WHERE role_name = $1`, [role]);
+    const roleResult = await pool.query(`SELECT id FROM "learnerlogin".roles WHERE role_name = $1`, [role]);
     if (roleResult.rows.length === 0) {
       return res.render('register', { message: 'Role not found' });
     }
@@ -224,7 +207,7 @@ app.post('/users/register', async (req, res) => {
 
     // Insertar usuario con acces como array
     const newUser = await pool.query(
-      `INSERT INTO users (name, username, password, role_id, acces)
+      `INSERT INTO "learnerlogin".users (name, username, password, role_id, acces)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, password`,
       [name, username, hashedPassword, roleId, acces]
@@ -277,8 +260,8 @@ app.get('/messages', checkNotAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT m.*, u.name as sender_name 
-       FROM messages m 
-       JOIN users u ON m.sender_id = u.id 
+       FROM "learnerlogin".messages m 
+       JOIN "learnerlogin".users u ON m.sender_id = u.id 
        WHERE m.receiver_id = 2 
        ORDER BY m.timestamp DESC`
     );
@@ -307,7 +290,7 @@ app.put('/messages/:id/read', checkNotAuthenticated, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'UPDATE messages SET read = TRUE WHERE id = $1 AND receiver_id = $2 RETURNING *',
+      'UPDATE "learnerlogin".messages SET read = TRUE WHERE id = $1 AND receiver_id = $2 RETURNING *',
       [messageId, userId]
     );
 
@@ -348,7 +331,7 @@ const materialMap = {
 // Ruta para obtener el porcentaje de material 3
 app.get('/porcentaje-material', async (req, res) => {
   try {
-    const result = await poolSegundaDB.query(`
+    const result = await poolbdsi.query(`
       SELECT material,
       COUNT(*) AS cantidad,
       (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM "InfraestructuraVial".vias_poligonos)) AS porcentaje
@@ -526,7 +509,7 @@ app.get('/descargar-archivo', checkNotAuthenticated, (req, res) => {
 
 app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM descargas WHERE usuario_id = $1', [req.user.id]);
+    const result = await pool.query('SELECT * FROM "learnerlogin".descargas WHERE usuario_id = $1', [req.user.id]);
 
     // Convertir las fechas al formato 'YYYY-MM-DD HH:mm:ss.SSS'
     result.rows.forEach(row => {
@@ -551,7 +534,7 @@ app.get('/grilla24', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, texto, distrito_a, levantamiento_drone, procesamiento, post_procesamiento, publicacion_geoportal, fecha_levantamiento,estado_acumulativo FROM "fotogrametria".grilla2024` ;
-    const result = await poolTerceraDB.query(query);
+    const result = await pool.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -591,7 +574,7 @@ app.get('/vias24', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, distrito_c, distrito_a, cod_via, material, fecha_mate, nombre_via, perfil_via, calzada FROM "InfraestructuraVial".vias_poligonos` ;
-    const result = await poolSegundaDB.query(query);
+    const result = await poolbdsi.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -635,7 +618,7 @@ app.get('/poligonos', async (req, res) => {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a,distrito_c,distrito_a,clase,tipo_emp,ubicacion,temporal,fijo,fecha,direccion_,tecnico,
       nro_tramit,zona,zonadr FROM "sicat".predios` ;
-    const result = await poolTerceraDB.query(query);
+    const result = await pool.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)

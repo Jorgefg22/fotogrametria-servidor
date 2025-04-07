@@ -7,8 +7,8 @@ function initialize(passport) {
 
   const authenticateUser = (username, password, done) => {
     pool.query(
-      `SELECT u.id, u.username, u.password, r.role_name FROM users u
-       LEFT JOIN roles r ON u.role_id = r.id WHERE u.username = $1`,
+      `SELECT u.id, u.username, u.password, r.role_name FROM "learnerlogin".users u
+       LEFT JOIN "learnerlogin".roles r ON u.role_id = r.id WHERE u.username = $1`,
       [username],
       (err, results) => {
         if (err) {
@@ -48,8 +48,8 @@ function initialize(passport) {
 
   passport.deserializeUser((id, done) => {
     pool.query(
-      `SELECT u.id, u.name, u.username, r.role_name FROM users u
-       LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = $1`,
+      `SELECT u.id, u.name, u.username, r.role_name FROM "learnerlogin".users u
+       LEFT JOIN "learnerlogin".roles r ON u.role_id = r.id WHERE u.id = $1`,
       [id],
       (err, results) => {
         if (err) {
