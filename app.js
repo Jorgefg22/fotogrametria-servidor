@@ -16,6 +16,12 @@ const { checkRole, guardarRegistroDescarga } = require('./middleware'); // Impor
 const { Console } = require('console');
 const { format } = require('date-fns');
 
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+});
+
 initializePassport(passport);
 app.use(express.urlencoded({ extended: false }));
 app.engine('html', ejs.renderFile); // Establece el motor de plantillas para archivos ".html"
@@ -157,7 +163,7 @@ app.post('/messages', checkNotAuthenticated, async (req, res) => {
   const timestamp = new Date(); // Capturar la fecha y hora actual
   try {
     const result = await pool.query(
-      'INSERT INTO messages (sender_id, receiver_id, content, grilla, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      'INSERT INTO "learnerlogin".messages (sender_id, receiver_id, content, grilla, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [sender_id, receiver_id, content, grilla, timestamp] // Pasar el timestamp al query
     );
     res.redirect('/users/geoport');
@@ -601,13 +607,80 @@ app.get('/presas', async (req, res) => {
 
       res.json(featureCollection);  // Enviar la colección de features como GeoJSON
     } else {
-      res.status(404).json({ error: 'No se encontraron grillas' });
+      res.status(404).json({ error: 'No se encontraron presas' });
     }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al consultar la base de datos en presas' });
   }
 });
+
+app.post( '/upimagespresa/:idcuenca',checkNotAuthenticated, upload.fields([
+    { name: "foto_1", maxCount: 1 },
+    { name: "foto_2", maxCount: 1 },
+    { name: "foto_3", maxCount: 1 },
+    { name: "foto_4", maxCount: 1 },
+    { name: "foto_5", maxCount: 1 },
+  ]), async (req, res) => {
+    const fk_cod_presa = req.params.idcuenca;
+    const descripcion = req.body.descripcion;
+    const fecha = new Date();
+
+    const fotos = [
+      req.files.foto_1?.[0]?.buffer || null,
+      req.files.foto_2?.[0]?.buffer || null,
+      req.files.foto_3?.[0]?.buffer || null,
+      req.files.foto_4?.[0]?.buffer || null,
+      req.files.foto_5?.[0]?.buffer || null,
+    ];
+
+    try {
+      const result = await poolbdmt.query(
+        `INSERT INTO "gr_cuencas_presas".inspeccion_presa 
+        (fk_cod_presa, fecha, descripcion, foto_1, foto_2, foto_3, foto_4, foto_5) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [fk_cod_presa, fecha, descripcion, ...fotos]
+      );
+
+      res.redirect('/users/geoport');
+    } catch (err) {
+      console.error('Error al guardar las imágenes:', err);
+      res.status(500).send('Error al guardar la inspección');
+    }
+  }
+);
+
+
+
+app.get('/embalse', async (req, res) => {
+  try {
+    const query = `
+      SELECT fid, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, cod, nombre FROM "gr_cuencas_presas".embalse` ;
+    const result = await poolbdmt.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            cod: row.cod,
+            nombre: row.nombre
+          }
+        }))
+      };
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron embalses' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos en embalse' });
+  }
+});
+
 
 
 app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) => {
