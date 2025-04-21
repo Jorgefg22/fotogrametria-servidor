@@ -49,7 +49,7 @@ fetch('/presas')
                                   <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">SubCuenca</li>
                                   <li class="list-group-item">${feature.properties.subcuenca}</li>
                                   <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Rio</li>
-                                  <li class="list-group-item">${getMaterialByNumber(feature.properties.rio)}</li>
+                                  <li class="list-group-item">${feature.properties.rio}</li>
                                   <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Tipo de Presa</li>
                                   <li class="list-group-item">${feature.properties.tipo_presa}</li>
               <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Tamaño</li>
@@ -58,7 +58,7 @@ fetch('/presas')
                                   <li class="list-group-item">${feature.properties.anio_construccion}</li>
                                   </ul> <br>`;
 
-                                    var contentGeneral = `
+                    var contentGeneral = `
                                     <p>
                                     <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" style="width: 100%;">
                                       Agregar Fotos de Inspeccion
@@ -72,7 +72,13 @@ fetch('/presas')
                                         <label for="descripcion" class="form-label">Descripcion</label>
                                         <textarea class="form-control" name="descripcion" id="descripcion" rows="3"></textarea>
                                        </div>
-                                       
+
+                                       <div class="form-group">
+                                        <label for="porjentaje">Porcentaje:</label><div id="tooltip">50%</div>
+                                        <br>
+                                        <input type="range" id="porjentaje" name="porcentaje" style="width: 100%;" min="0" max="100" value="50" oninput="tooltip.textContent = this.value + '%'">
+                                       </div>
+                                       <br>    
                                         <div class="mb-3">
                                             <label for="file1" class="form-label">Foto 1</label>
                                             <input type="file" class="form-control" name="foto_1" id="foto_1" required>
@@ -102,6 +108,7 @@ fetch('/presas')
                     // Cambiar el contenido del panel del sidebar
                     document.getElementById('info-content').innerHTML = content;
                     document.getElementById('info-general').innerHTML = contentGeneral;
+                    obtenerImganesporCodpres(feature.properties.cod)
                     // Abrir el sidebar
                     sidebar.open('home');
                 });
@@ -114,84 +121,57 @@ fetch('/presas')
 
 
 
-const colorMap = {
-    'Sin registro': '#0d6efd',
-    'Tierra': '#fdec03',
-    'Ripio': '#ff540b',
-    'Pavic-Enladrillado': '#fd0101',
-    'Piedra': '#fbfbfb',
-    'Loseta': '#999682',
-    'Adoquin': '#6f30cf',
-    'Asfalto': '#090a0a',
-    'Pavimento Rigido': '#666767'
-};
-const materialMap = {
-    0: 'Sin registro',
-    1: 'Tierra',
-    2: 'Ripio',
-    3: 'Pavic-Enladrillado',
-    4: 'Piedra',
-    5: 'Loseta',
-    6: 'Adoquin',
-    7: 'Asfalto',
-    8: 'Pavimento Rigido',
-};
+    let buttons = '<button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal"  onclick="cargarImagenes(';
+    let funcionbutonimg = ')" >Ver fotos</button>'
 
-async function obtenerPorcentajeMaterial() {
-    try {
-        const response = await fetch('  /porcentaje-material');
-        if (!response.ok) {
-            throw new Error('Error en la respuesta de la API');
+    async function obtenerImganesporCodpres(id) {
+
+        try {
+            const response = await fetch('/inspecciones_presa/' + id);
+            const inspecciones = await response.json();
+            const tableBody = document.getElementById('inspecTableBody');
+            tableBody.innerHTML = ''; // Limpiar el contenido actual
+
+            inspecciones.forEach((inspeccion) => {
+                const row = document.createElement('tr');
+                let porcent ="%" 
+                row.innerHTML = `
+                
+                    <td>${inspeccion.fecha}</td>
+                    <td>${inspeccion.descripcion}</td>
+                     <td>${inspeccion.porcentaje}`+ porcent+`</td>
+                    <td>`+ buttons+inspeccion.id+funcionbutonimg+`</td>
+                    `;
+                tableBody.appendChild(row);
+            });
+        } catch (err) {
+            console.error('Error al cargar las inspecciones:', err);
         }
-        const data = await response.json();
-        return data; // Devolver todo el conjunto de datos
-    } catch (error) {
-        console.error('Error al obtener el porcentaje de material:', error);
-        return null; // O manejar el error según sea necesario
-    }
-}
-
-// Crear el gráfico usando Chart.js
-async function crearGrafico() {
-    const datos = await obtenerPorcentajeMaterial();
-
-    if (!datos) {
-        console.error('No se pudieron obtener los datos de los materiales');
-        return;
     }
 
-    // Extraer etiquetas (materiales) y datos (porcentajes) del resultado de la API
-    const etiquetas = datos.map(item => item.material);
-    const porcentajes = datos.map(item => item.porcentaje);
-    // Asignar colores basados en el tipo de material
-    const colores = etiquetas.map(material => colorMap[material] || '#C9CBCF'); // Color por defecto si no está en el mapa
-
-    // Crear el gráfico usando Chart.js
-    const ctx = document.getElementById('myChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie', // O 'bar', 'doughnut', etc.
-        data: {
-            labels: etiquetas, // Etiquetas de los materiales
-            datasets: [{
-                data: porcentajes, // Datos de los porcentajes
-                backgroundColor: colores // Colores asignados según el material
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'left'
-                }
+    async function cargarImagenes(idInspeccion) {
+        try {
+          const response = await fetch(`/imagenes_inspeccion/${idInspeccion}`);
+          if (!response.ok) throw new Error('Error al obtener imágenes');
+      
+          const imagenes = await response.json(); // { foto_1, foto_2, ... }
+      
+          for (let i = 1; i <= 5; i++) {
+            const img = document.getElementById(`foto_${i}`);
+            const base64 = imagenes[`foto_${i}`];
+      
+            if (base64) {
+              img.src = `data:image/jpeg;base64,${base64}`;
+            } else {
+              img.src = ''; // o una imagen por defecto si querés: "no-image.jpg"
+              img.alt = 'Imagen no disponible';
             }
+          }
+        } catch (error) {
+          console.error('Error al cargar imágenes:', error);
         }
-    });
-}
-
-
-function getMaterialByNumber(number) {
-    return materialMap[number] || 'Material no encontrado';
-}
+      }
+      
 
 let capaSecundaria = "";
 
@@ -213,10 +193,9 @@ fetch('/embalse') // o una ruta absoluta: '/data/capa_secundaria.geojson'
     })
     .catch(error => {
         console.error('Error al cargar el archivo GeoJSON de la capa secundaria:', error);
-    });
+    }); 
 
-
-
+    
 function intentarAgregarControlCapas() {
     if (capaSecundaria) {
         let overlayMaps = {

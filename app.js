@@ -624,6 +624,7 @@ app.post( '/upimagespresa/:idcuenca',checkNotAuthenticated, upload.fields([
   ]), async (req, res) => {
     const fk_cod_presa = req.params.idcuenca;
     const descripcion = req.body.descripcion;
+    const porcentaje = req.body.porcentaje;
     const fecha = new Date();
 
     const fotos = [
@@ -637,9 +638,9 @@ app.post( '/upimagespresa/:idcuenca',checkNotAuthenticated, upload.fields([
     try {
       const result = await poolbdmt.query(
         `INSERT INTO "gr_cuencas_presas".inspeccion_presa 
-        (fk_cod_presa, fecha, descripcion, foto_1, foto_2, foto_3, foto_4, foto_5) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [fk_cod_presa, fecha, descripcion, ...fotos]
+        (fk_cod_presa, fecha, descripcion, porcentaje, foto_1, foto_2, foto_3, foto_4, foto_5) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [fk_cod_presa, fecha, descripcion,porcentaje, ...fotos]
       );
 
       res.redirect('/users/geoport');
@@ -650,6 +651,51 @@ app.post( '/upimagespresa/:idcuenca',checkNotAuthenticated, upload.fields([
   }
 );
 
+
+app.get('/inspecciones_presa/:cod_presa', checkNotAuthenticated, async (req, res) => {
+  const { cod_presa } = req.params;
+
+  try {
+    const result = await poolbdmt.query(
+      `SELECT id, fecha, descripcion, porcentaje FROM "gr_cuencas_presas".inspeccion_presa 
+       WHERE fk_cod_presa = $1 
+       ORDER BY fecha DESC`,
+      [cod_presa]
+    );
+
+    res.json(result.rows); // [{ id: 1, fecha: '2024-01-01' }, ...]
+  } catch (err) {
+    console.error('Error al obtener inspecciones:', err);
+    res.status(500).send('Error');
+  }
+});
+
+app.get('/imagenes_inspeccion/:id', checkNotAuthenticated, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await poolbdmt.query(
+      `SELECT foto_1, foto_2, foto_3, foto_4, foto_5 
+       FROM "gr_cuencas_presas".inspeccion_presa 
+       WHERE id = $1`,
+      [id]
+    );
+
+    const fila = result.rows[0];
+
+    res.json({
+      foto_1: fila.foto_1 ? fila.foto_1.toString('base64') : null,
+      foto_2: fila.foto_2 ? fila.foto_2.toString('base64') : null,
+      foto_3: fila.foto_3 ? fila.foto_3.toString('base64') : null,
+      foto_4: fila.foto_4 ? fila.foto_4.toString('base64') : null,
+      foto_5: fila.foto_5 ? fila.foto_5.toString('base64') : null
+    });
+
+  } catch (err) {
+    console.error('Error al obtener imágenes:', err);
+    res.status(500).send('Error');
+  }
+});
 
 
 app.get('/embalse', async (req, res) => {
