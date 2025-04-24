@@ -53,4 +53,8 @@ width: 50px;
   .leaflet-bottom .leaflet-control {
     margin-bottom: 30px;
 }
+
+.maplabel{
+  text-shadow: 0 0 3px white, 1px 1px 2px white;
+}
   

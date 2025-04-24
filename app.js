@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const { Pool } = require('pg');
-const { pool, poolbdsi, poolbdec } = require('./config');
+const { pool, poolbdsi,poolbdmt} = require('./config');
 const ejs = require('ejs');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
@@ -14,6 +14,12 @@ const initializePassport = require('./pswConfig');
 const { checkRole, guardarRegistroDescarga } = require('./middleware'); // Importa el middleware de verificación de roles
 const { Console } = require('console');
 const { format } = require('date-fns');
+
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+});
 
 initializePassport(passport);
 app.use(express.urlencoded({ extended: false }));
@@ -45,8 +51,8 @@ app.get('/users/login', checkAuthenticated, (req, res) => {
   res.render('login');
 });
 
-//Rutas por roles de la base de datos
 
+//Rutas por roles de la base de dato
 app.get('/admin', checkNotAuthenticated, checkRole('admin'), (req, res) => {
   res.render('admin', { user: req.user.name });
 });
@@ -59,13 +65,10 @@ app.get('/editor', checkNotAuthenticated, checkRole('editor'), (req, res) => {
 app.get('/lector', checkNotAuthenticated, checkRole('lector'), (req, res) => {
   res.render('lector', { user: req.user.name });
 });
-
 app.get('/users/geoport', checkNotAuthenticated, (req, res) => {
   console.log(req.user.role_name)
   res.render('geoport', { user: req.user.name, role: req.user.role_name });
 });
-
-
 app.get('/users/logout', (req, res) => {
   //res.render('index', { message: 'You have logged out successfully' });
   req.logout(function (err) {
@@ -77,73 +80,11 @@ app.get('/users/logout', (req, res) => {
   });
 });
 
-/*app.post('/users/register', async (req, res) => {
-  let { name, username, password, password_confirm, role } = req.body; // Añadir role
-  let errors = [];
-
-  if (!name || !username || !password || !password_confirm || !role) {
-    errors.push({ message: 'Please enter all fields correctly' });
-  }
-  if (password.length < 6) {
-    errors.push({ message: 'Password must be at least 6 characters long' });
-  }
-  if (password !== password_confirm) {
-    errors.push({ message: 'Passwords do not match' });
-  }
-  if (errors.length > 0) {
-    res.render('register', { errors, name, username, password, password_confirm, role });
-  } else {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    pool.query(
-      `SELECT * FROM users WHERE username = $1`,
-      [username],
-      (err, results) => {
-        if (err) {
-          console.log(err);
-        } if (results.rows.length > 0) {
-          return res.render('register', {
-            message: 'Username already registered'
-          });
-        } else {
-          pool.query(
-            `SELECT id FROM roles WHERE role_name = $1`,
-            [role],
-            (err, results) => {
-              if (err) {
-                throw err;
-              }
-              if (results.rows.length === 0) {
-                return res.render('register', {
-                  message: 'Role not found'
-                });
-              }
-              const roleId = results.rows[0].id;
-              pool.query(
-                `INSERT INTO users (name, username, password, role_id)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id, password`,
-                [name, username, hashedPassword, roleId],
-                (err, results) => {
-                  if (err) {
-                    throw err;
-                  }
-                  req.flash('success_msg', 'You are successfully registered');
-                  res.redirect('/users/geoport');
-                }
-              );
-            }
-          );
-        }
-      }
-    );
-  }
-});**/
-
 app.get('/users/accesos', checkNotAuthenticated, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(`SELECT acces FROM users WHERE id = $1`, [req.user.id]);
+    const result = await pool.query(`SELECT acces FROM "learnerlogin".users WHERE id = $1`, [req.user.id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'User not found' });
@@ -157,8 +98,6 @@ app.get('/users/accesos', checkNotAuthenticated, async (req, res) => {
   }
 });
 
-
-
 app.post('/users/register', async (req, res) => {
   let { name, username, password, password_confirm, role, acces } = req.body;
   let errors = [];
@@ -167,7 +106,6 @@ app.post('/users/register', async (req, res) => {
   if (!Array.isArray(acces)) {
     acces = acces ? [acces] : []; 
   }
-
   if (!name || !username || !password || !password_confirm || !role) {
     errors.push({ message: 'Please enter all fields correctly' });
   }
@@ -180,42 +118,34 @@ app.post('/users/register', async (req, res) => {
   if (errors.length > 0) {
     return res.render('register', { errors, name, username, password, password_confirm, role, acces });
   }
-
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     // Verificar si el username ya está registrado
-    const userCheck = await pool.query(`SELECT * FROM users WHERE username = $1`, [username]);
+    const userCheck = await pool.query(`SELECT * FROM "learnerlogin".users WHERE username = $1`, [username]);
     if (userCheck.rows.length > 0) {
       return res.render('register', { message: 'Username already registered' });
     }
-
     // Obtener el role_id a partir del nombre del rol
-    const roleResult = await pool.query(`SELECT id FROM roles WHERE role_name = $1`, [role]);
+    const roleResult = await pool.query(`SELECT id FROM "learnerlogin".roles WHERE role_name = $1`, [role]);
     if (roleResult.rows.length === 0) {
       return res.render('register', { message: 'Role not found' });
     }
     const roleId = roleResult.rows[0].id;
-
     // Insertar usuario con acces como array
     const newUser = await pool.query(
-      `INSERT INTO users (name, username, password, role_id, acces)
+      `INSERT INTO "learnerlogin".users (name, username, password, role_id, acces)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, password`,
       [name, username, hashedPassword, roleId, acces]
     );
 
-    req.flash('success_msg', 'You are successfully registered');
+    rq.flash('success_msg', 'You are successfully registered');
     res.redirect('/users/geoport');
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');
   }
 });
-
-
-
-
 
 app.post('/users/login',passport.authenticate('local', {
     successRedirect: '/users/geoport',
@@ -225,16 +155,14 @@ app.post('/users/login',passport.authenticate('local', {
   })
 );
 
-//rutas de la bandeja de entrada y configuraciones 
-// Enviar mensaje
+//rutas de la bandeja de entrada y configuraciones / Enviar mensaje
 app.post('/messages', checkNotAuthenticated, async (req, res) => {
   const { receiver_id, content, grilla } = req.body; // Añadir grid si es necesario
   const sender_id = req.user.id;
   const timestamp = new Date(); // Capturar la fecha y hora actual
-
   try {
     const result = await pool.query(
-      'INSERT INTO messages (sender_id, receiver_id, content, grilla, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      'INSERT INTO "learnerlogin".messages (sender_id, receiver_id, content, grilla, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [sender_id, receiver_id, content, grilla, timestamp] // Pasar el timestamp al query
     );
     res.redirect('/users/geoport');
@@ -248,17 +176,14 @@ app.post('/messages', checkNotAuthenticated, async (req, res) => {
 // Obtener mensajes (bandeja de entrada)
 app.get('/messages', checkNotAuthenticated, async (req, res) => {
   const userId = req.user.id;
-
   try {
     const result = await pool.query(
       `SELECT m.*, u.name as sender_name 
-       FROM messages m 
-       JOIN users u ON m.sender_id = u.id 
+       FROM "learnerlogin".messages m 
+       JOIN "learnerlogin".users u ON m.sender_id = u.id 
        WHERE m.receiver_id = 2 
        ORDER BY m.timestamp DESC`
     );
-    
-
       result.rows.forEach(row => {
         for (const key in row) {
           if (row[key] instanceof Date) {
@@ -266,9 +191,7 @@ app.get('/messages', checkNotAuthenticated, async (req, res) => {
           }
         }
       });
-  
     res.json(result.rows);
-    
   } catch (err) {
     console.error('Error al obtener los mensajes:', err);
     res.status(500).send('Error al obtener los mensajes');
@@ -279,17 +202,15 @@ app.get('/messages', checkNotAuthenticated, async (req, res) => {
 app.put('/messages/:id/read', checkNotAuthenticated, async (req, res) => {
   const messageId = req.params.id;
   const userId = req.user.id;
-
   try {
     const result = await pool.query(
-      'UPDATE messages SET read = TRUE WHERE id = $1 AND receiver_id = $2 RETURNING *',
+      'UPDATE "learnerlogin".messages SET read = TRUE WHERE id = $1 AND receiver_id = $2 RETURNING *',
       [messageId, userId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).send('Mensaje no encontrado o no autorizado');
     }
-
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Error al marcar el mensaje como leído:', err);
@@ -406,6 +327,9 @@ app.get('/users/geoportVias', checkNotAuthenticated, (req, res) => {
 app.get('/users/geoportPredios', checkNotAuthenticated, (req, res) => {
   res.render('geoportPredios', { user: req.user.name, role: req.user.role_name });
 });
+app.get('/users/geoportMTierra', checkNotAuthenticated, (req, res) => {
+  res.render('geoportMTierra', { user: req.user.name, role: req.user.role_name });
+});
 
 app.get('/users/geoportD2', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD2', { user: req.user.name, role: req.user.role_name });
@@ -494,7 +418,8 @@ app.get('/descargar-archivo', checkNotAuthenticated, (req, res) => {
 
 app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM descargas WHERE usuario_id = $1', [req.user.id]);
+    const result = await pool.query('SELECT * FROM "learnerlogin".descargas WHERE usuario_id = $1', [req.user.id]);
+
     // Convertir las fechas al formato 'YYYY-MM-DD HH:mm:ss.SSS'
     result.rows.forEach(row => {
       for (const key in row) {
@@ -517,7 +442,7 @@ app.get('/grilla24', async (req, res) => {
   try {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, id, texto, distrito_a, levantamiento_drone, procesamiento, post_procesamiento, publicacion_geoportal, fecha_levantamiento,estado_acumulativo FROM "fotogrametria".grilla2024` ;
-    const result = await poolbdec.query(query);
+    const result = await pool.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -595,7 +520,7 @@ app.get('/poligonos', async (req, res) => {
     const query = `
       SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a,distrito_c,distrito_a,clase,tipo_emp,ubicacion,temporal,fijo,fecha,direccion_,tecnico,
       nro_tramit,zona,zonadr FROM "sicat".predios` ;
-    const result = await poolbdec.query(query);
+    const result = await pool.query(query);
 
     if (result.rows.length > 0) {
       // Crear una colección de Features (GeoJSON FeatureCollection)
@@ -636,6 +561,165 @@ app.get('/poligonos', async (req, res) => {
   }
 });
 
+
+//madre tierra
+app.get('/presas', async (req, res) => {
+  try {
+    const query = `
+      SELECT fid, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, cod, nombre, coord_este, coord_norte, lat, lon, cuenca_influencia, subcuenca ,rio, tipo_presa, tamanio, anio_construccion , proposito_uso FROM "gr_cuencas_presas".presa` ;
+    const result = await poolbdmt.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            cod: row.cod,
+            nombre:row.nombre,
+            coord_este: row.coord_este,
+            coord_norte: row.coord_norte,
+            procesamiento: row.procesamiento,
+            lat: row.lat,
+            lon: row.lon,
+            cuenca_influencia: row.cuenca_influencia,
+            subcuenca:row.subcuenca,
+            rio:row.rio,
+            tipo_presa:row.tipo_presa,
+            tamanio:row.tamanio,
+            anio_construccion:row.anio_construccion,
+            proposito_uso: row.proposito_uso
+           
+          }
+        }))
+      };
+
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron presas' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos en presas' });
+  }
+});
+
+app.post( '/upimagespresa/:idcuenca',checkNotAuthenticated, upload.fields([
+    { name: "foto_1", maxCount: 1 },
+    { name: "foto_2", maxCount: 1 },
+    { name: "foto_3", maxCount: 1 },
+    { name: "foto_4", maxCount: 1 },
+    { name: "foto_5", maxCount: 1 },
+  ]), async (req, res) => {
+    const fk_cod_presa = req.params.idcuenca;
+    const descripcion = req.body.descripcion;
+    const porcentaje = req.body.porcentaje;
+    const fecha = new Date();
+
+    const fotos = [
+      req.files.foto_1?.[0]?.buffer || null,
+      req.files.foto_2?.[0]?.buffer || null,
+      req.files.foto_3?.[0]?.buffer || null,
+      req.files.foto_4?.[0]?.buffer || null,
+      req.files.foto_5?.[0]?.buffer || null,
+    ];
+
+    try {
+      const result = await poolbdmt.query(
+        `INSERT INTO "gr_cuencas_presas".inspeccion_presa 
+        (fk_cod_presa, fecha, descripcion, porcentaje, foto_1, foto_2, foto_3, foto_4, foto_5) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [fk_cod_presa, fecha, descripcion,porcentaje, ...fotos]
+      );
+
+      res.redirect('/users/geoport');
+    } catch (err) {
+      console.error('Error al guardar las imágenes:', err);
+      res.status(500).send('Error al guardar la inspección');
+    }
+  }
+);
+
+
+app.get('/inspecciones_presa/:cod_presa', checkNotAuthenticated, async (req, res) => {
+  const { cod_presa } = req.params;
+
+  try {
+    const result = await poolbdmt.query(
+      `SELECT id, fecha, descripcion, porcentaje FROM "gr_cuencas_presas".inspeccion_presa 
+       WHERE fk_cod_presa = $1 
+       ORDER BY fecha DESC`,
+      [cod_presa]
+    );
+
+    res.json(result.rows); // [{ id: 1, fecha: '2024-01-01' }, ...]
+  } catch (err) {
+    console.error('Error al obtener inspecciones:', err);
+    res.status(500).send('Error');
+  }
+});
+
+app.get('/imagenes_inspeccion/:id', checkNotAuthenticated, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await poolbdmt.query(
+      `SELECT foto_1, foto_2, foto_3, foto_4, foto_5 
+       FROM "gr_cuencas_presas".inspeccion_presa 
+       WHERE id = $1`,
+      [id]
+    );
+
+    const fila = result.rows[0];
+
+    res.json({
+      foto_1: fila.foto_1 ? fila.foto_1.toString('base64') : null,
+      foto_2: fila.foto_2 ? fila.foto_2.toString('base64') : null,
+      foto_3: fila.foto_3 ? fila.foto_3.toString('base64') : null,
+      foto_4: fila.foto_4 ? fila.foto_4.toString('base64') : null,
+      foto_5: fila.foto_5 ? fila.foto_5.toString('base64') : null
+    });
+
+  } catch (err) {
+    console.error('Error al obtener imágenes:', err);
+    res.status(500).send('Error');
+  }
+});
+
+
+app.get('/embalse', async (req, res) => {
+  try {
+    const query = `
+      SELECT fid, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, cod, nombre FROM "gr_cuencas_presas".embalse` ;
+    const result = await poolbdmt.query(query);
+
+    if (result.rows.length > 0) {
+      // Crear una colección de Features (GeoJSON FeatureCollection)
+      const featureCollection = {
+        type: "FeatureCollection",
+        features: result.rows.map(row => ({
+          type: "Feature",
+          geometry: JSON.parse(row.geom),  // GeoJSON Geometry
+          properties: {
+            cod: row.cod,
+            nombre: row.nombre
+          }
+        }))
+      };
+      res.json(featureCollection);  // Enviar la colección de features como GeoJSON
+    } else {
+      res.status(404).json({ error: 'No se encontraron embalses' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar la base de datos en embalse' });
+  }
+});
+
+
+
 app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) => {
   const nombreArchivo = req.params.nombreArchivo;
   console.log(nombreArchivo)
@@ -653,7 +737,6 @@ app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) =
     fecha_hora: new Date(),
     resultado: 'Iniciado'
   };
-
   res.download(rutaArchivo, async (err) => {
     if (err) {
       registroDescarga.resultado = 'Fallido';

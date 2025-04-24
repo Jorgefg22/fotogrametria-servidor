@@ -247,7 +247,7 @@ fetch('/grilla24')
         let center = layer.getBounds().getCenter();
         let label = L.marker(center, {
           icon: L.divIcon({
-            className: 'label',
+            className: 'label maplabel',
             html: feature.properties.texto,
             iconSize: [40, 20]
           })

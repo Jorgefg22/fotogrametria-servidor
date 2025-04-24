@@ -16,8 +16,8 @@ const poolbdsi = new Pool({
   connectionString: isProduction ? process.env.DATABASE_URL : connectionStringsi, // Corregido
 });
 
-const poolbdec = new Pool({
+const poolbdmt = new Pool({
   connectionString: isProduction ? process.env.DATABASE_URL : connectionStringec, // Corregido
 });
 
-module.exports = { pool, poolbdsi, poolbdec };
+module.exports = { pool, poolbdsi, poolbdmt };

@@ -3,6 +3,7 @@ let BTN_DISTRITOS = '	<button class="btn btn-secondary dropdown-toggle" type="bu
 let BTN_BANDEJA_ENTRADA = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal3" style="width: 100%; margin-top: 10px;">Bandeja de entrada	</button>';
 let BTN_PREDIOS = '<button type="button"id= "btn_predios" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Portal de Predios</button>';
 let BTN_VIAS = '<button type="button" id ="btn_vias" class="btn btn-primary" style="width: 100%; margin-top: 10px;" >Portal de Vias</button>';
+let BTN_CUENCAS = '<button type="button" id ="btn_cuencas" class="btn btn-primary" style="width: 100%; margin-top: 10px;" >Portal Cuencas</button>';
 
 async function addNametocircle() {
 
@@ -53,6 +54,15 @@ function addVias() {
   });
 }
 
+function addCuencas() {
+  let divCuencas = document.getElementById("portal_cuencas");
+  divCuencas.innerHTML = BTN_CUENCAS;
+  let btn = document.getElementById("btn_cuencas");
+  btn.addEventListener("click", function () {
+    window.location.href = "/users/geoportMtierra";
+  });
+}
+
 async function verifyAcces(role) {
   try {
     const response = await fetch('/users/accesos');
@@ -76,7 +86,7 @@ async function verifyAcces(role) {
             addPredios();
             break;
           case "cuencas":
-            console.log("aun no esta inplementado");
+            addCuencas();
             break;
         }
       });

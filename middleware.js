@@ -15,7 +15,7 @@ function checkRole(role) {
     const { usuario_id, ip, nombre_archivo, tamano_archivo, fecha_hora, resultado } = registro;
     try {
       await pool.query(
-        `INSERT INTO descargas (usuario_id, ip, nombre_archivo, tamano_archivo, fecha_hora, resultado)
+        `INSERT INTO "learnerlogin".descargas (usuario_id, ip, nombre_archivo, tamano_archivo, fecha_hora, resultado)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [usuario_id, ip, nombre_archivo, tamano_archivo, fecha_hora, resultado]
       );
@@ -27,4 +27,3 @@ function checkRole(role) {
   module.exports = {
     checkRole, guardarRegistroDescarga 
   };
-  
