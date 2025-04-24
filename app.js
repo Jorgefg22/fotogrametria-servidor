@@ -140,7 +140,7 @@ app.post('/users/register', async (req, res) => {
       [name, username, hashedPassword, roleId, acces]
     );
 
-    rq.flash('success_msg', 'You are successfully registered');
+    req.flash('success_msg', 'You are successfully registered');
     res.redirect('/users/geoport');
   } catch (err) {
     console.error(err);
