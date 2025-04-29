@@ -66,7 +66,7 @@ fetch('/geo/presas')
                                     </p>
                                     <div class="collapse" id="collapseExample">
                                     <div class="card card-body">
-                                        <form action="/upimagespresa/${feature.properties.cod}" method="POST" enctype="multipart/form-data">
+                                        <form action="/geo/upimagespresa/${feature.properties.cod}" method="POST" enctype="multipart/form-data">
                                        
                                        <div class="mb-3">
                                         <label for="descripcion" class="form-label">Descripcion</label>

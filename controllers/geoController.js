@@ -150,6 +150,7 @@ exports.uploadInspeccionPresa = async (req, res) => {
   const { idcuenca } = req.params;
   const { descripcion, porcentaje } = req.body;
   const fecha = new Date();
+
   const fotos = [
     req.files.foto_1?.[0]?.buffer || null,
     req.files.foto_2?.[0]?.buffer || null,
@@ -165,7 +166,7 @@ exports.uploadInspeccionPresa = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [idcuenca, fecha, descripcion, porcentaje, ...fotos]
     );
-    res.redirect('/users/geoport');
+    res.redirect('/users/geoportMtierra');
   } catch (err) {
     console.error('Error al guardar las imágenes:', err);
     res.status(500).send('Error al guardar inspección');
