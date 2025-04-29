@@ -65,7 +65,7 @@ function addCuencas() {
 
 async function verifyAcces(role) {
   try {
-    const response = await fetch('/users/accesos');
+    const response = await fetch('/accesos');
     const accesos = await response.json();
 
     if (role == "root") {

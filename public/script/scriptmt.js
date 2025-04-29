@@ -18,7 +18,7 @@ var sidebar = L.control.sidebar({ container: 'sidebar' }).addTo(map).open('home'
 // Cargar los datos GeoJSON
 var grilla2024 = 'http://10.0.38.17:8080/geoserver/Vias_Catastro/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Vias_Catastro%3Avias_poligonos&maxFeatures=20000&outputFormat=application%2Fjson&srsName=EPSG:4326';
 
-fetch('/presas')
+fetch('/geo/presas')
     .then(response => response.json())
     .then(data => {
         // Agregar los datos GeoJSON al mapa y agregar el evento click
@@ -127,7 +127,7 @@ fetch('/presas')
     async function obtenerImganesporCodpres(id) {
 
         try {
-            const response = await fetch('/inspecciones_presa/' + id);
+            const response = await fetch('/geo/inspecciones_presa/' + id);
             const inspecciones = await response.json();
             const tableBody = document.getElementById('inspecTableBody');
             tableBody.innerHTML = ''; // Limpiar el contenido actual
@@ -151,7 +151,7 @@ fetch('/presas')
 
     async function cargarImagenes(idInspeccion) {
         try {
-          const response = await fetch(`/imagenes_inspeccion/${idInspeccion}`);
+          const response = await fetch(`/geo/imagenes_inspeccion/${idInspeccion}`);
           if (!response.ok) throw new Error('Error al obtener imágenes');
       
           const imagenes = await response.json(); // { foto_1, foto_2, ... }
@@ -175,7 +175,7 @@ fetch('/presas')
 
 let capaSecundaria = "";
 
-fetch('/embalse') // o una ruta absoluta: '/data/capa_secundaria.geojson'
+fetch('/geo/embalse') // o una ruta absoluta: '/data/capa_secundaria.geojson'
     .then(response => response.json())
     .then(data => {
         capaSecundaria = L.geoJSON(data, {

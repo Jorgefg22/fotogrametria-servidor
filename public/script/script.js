@@ -1,27 +1,16 @@
 let map = L.map('map').setView([-17.403868804926827, -66.03924367573562], 13)
 
-//Agregar tilelAyer mapa base desde openstreetmap
-/*L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">Geoinformatica Catastral</a> contributors'
-}).addTo(map);*/
-
-
 L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   maxZoom: 20, // Nivel máximo de zoom
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], // Subdominios utilizados por Google para distribuir la carga
   attribution: 'Map data ©2023 Google' // Atribución de los datos del mapa
 }).addTo(map);
 
-
-var grilla2024 = 'http://10.0.38.17:8080/geoserver/fotogrametria_sacaba/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=fotogrametria_sacaba%3AGrilla_Area_Urbana_2024&maxFeatures=500&outputFormat=application%2Fjson&srsName=EPSG:4326'
-
 document.getElementById('fileInput').addEventListener('change', function (e) {
   var file = e.target.files[0];
 
   if (!file) return;
-
   var reader = new FileReader();
-
   reader.onload = function (e) {
     var contents = e.target.result;
 
@@ -60,22 +49,18 @@ document.getElementById('fileInput').addEventListener('change', function (e) {
       kmlLayer.addTo(map);
     }
   };
-
   reader.readAsText(file);
 });
 
 
 var marker = L.marker([28.3949, 84.1240]).addTo(map);
-
 // search button click 
 function search() {
 
 
   var latlng = document.getElementById('search').value;
   var latlngArr = latlng.split(',');
-
   var utmZone19S = '+proj=utm +zone=19 +south +ellps=WGS84 +datum=WGS84 +units=m +no_defs';
-
   // Sistema de referencia de coordenadas: WGS84
   var wgs84 = 'EPSG:4326';
 
@@ -88,9 +73,7 @@ function search() {
   // Convertir de UTM zona 19 Sur a WGS84
   var latLng = proj4(utmZone19S, wgs84, [easting, northing]);
 
-  /* Mostrar las coordenadas geográficas en la página web
-  document.getElementById('result').innerHTML = "Latitud: " + latLng[1].toFixed(14) +
-      "<br>Longitud: " + latLng[0].toFixed(14);*/
+
 
   map.setView([latLng[1].toFixed(14), latLng[0].toFixed(14)], 19);
   marker.setLatLng([latLng[1].toFixed(14), latLng[0].toFixed(14)]);
@@ -116,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   modal.addEventListener('show.bs.modal', async () => {
     try {
-      const response = await fetch('/users/descargados');
+      const response = await fetch('/descargas/descargados');
       const descargas = await response.json();
       const tableBody = document.getElementById('descargasTableBody');
       tableBody.innerHTML = ''; // Limpiar el contenido actual
@@ -174,7 +157,7 @@ fetch('/leaflet/area_urbana.geojson')
 
 //prueba geoport
 
-fetch('/grilla24')
+fetch('/geo/grilla24')
   .then(response => response.json())
   .then(data => {
      geojsonLayer = L.geoJSON(data, {
@@ -230,14 +213,14 @@ fetch('/grilla24')
           //numeroGrilla = feature.properties.texto;
 
           if (feature.properties.estado_acumulativo == 4) {
-            buton2d = '<a href="/users/descargar/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Ortomosaico 2D</a>';
+            buton2d = '<a href="/descargas/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Ortomosaico 2D</a>';
             buton3d = '<button class="btn btn-warning btn-sm" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Nube de Puntos 3D</button>';
           }
           if (feature.properties.estado_acumulativo == 0) {
             btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
           }
           if (feature.properties.estado_acumulativo == 10) {
-             buton2d = '<a href="/users/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Descargar Ortomosaico O.T. 2D</a>';
+             buton2d = '<a href="/descargas/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Descargar Ortomosaico O.T. 2D</a>';
           }
 
           layer.bindPopup('<div> <img src="/images/adt.png" width="300px" alt=""></div><div><h6>Gobierno Autonomo Municipal de Sacaba</h6><ul><li>Distrito: ' + feature.properties.distrito_a + '</li> <li>Grilla numero: <label id="numgrilla">' + feature.properties.texto + '</label></li><li>Estado: ' + statuslev + '</li><li>' + fechalev + '</li></ul></div><div style="text-align: center;">' + buton2d + buton3d + btnsoliciud + '</div>');
@@ -276,10 +259,6 @@ fetch('/grilla24')
     map.fire('zoomend');
 
   });
-
-
-
-
 
 
   //otro
