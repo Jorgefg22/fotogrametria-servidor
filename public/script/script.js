@@ -8,12 +8,10 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
 
 document.getElementById('fileInput').addEventListener('change', function (e) {
   var file = e.target.files[0];
-
   if (!file) return;
   var reader = new FileReader();
   reader.onload = function (e) {
     var contents = e.target.result;
-
     // Check file extension to determine format
     if (file.name.endsWith('.geojson')) {
       L.geoJSON(JSON.parse(contents), {

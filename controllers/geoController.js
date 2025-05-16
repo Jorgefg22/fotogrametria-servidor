@@ -24,7 +24,6 @@ exports.getGrilla2024 = async (req, res) => {
             publicacion_geoportal: row.publicacion_geoportal,
             fecha_levantamiento: row.fecha_levantamiento,
             estado_acumulativo: row.estado_acumulativo
-           
           }
         }))
       };
@@ -36,6 +35,28 @@ exports.getGrilla2024 = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al consultar la base de datos en grillas' });
+  }
+};
+
+
+exports.getLevantamientosPorGrilla = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+         id, 
+         TO_CHAR(fecha_levantamiento, 'YYYY-MM-DD') AS fecha_levantamiento, 
+         TO_CHAR(fecha_publicacion, 'YYYY-MM-DD') AS fecha_publicacion, 
+         unidad_encargada, 
+         id_grilla
+       FROM "fotogrametria".levantamientofotogrametrico 
+       WHERE id_grilla = $1 
+       ORDER BY fecha_levantamiento DESC`, 
+      [req.params.id_grilla]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener levantamientos');
   }
 };
 
@@ -170,5 +191,99 @@ exports.uploadInspeccionPresa = async (req, res) => {
   } catch (err) {
     console.error('Error al guardar las imágenes:', err);
     res.status(500).send('Error al guardar inspección');
+  }
+};
+
+const materialMap = {
+  0: 'Sin registro',
+  1: 'Tierra',
+  2: 'Ripio',
+  3: 'Pavic-Enladrillado',
+  4: 'Piedra',
+  5: 'Loseta',
+  6: 'Adoquin',
+  7: 'Asfalto',
+  8: 'Pavimento Rigido',
+};
+
+exports.getPorcetajeMaterialVia = async (req, res) => {
+ try {
+     const result = await poolbdsi.query(`
+       SELECT material,
+       COUNT(*) AS cantidad,
+       (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM "InfraestructuraVial".vias_poligonos)) AS porcentaje
+       FROM "InfraestructuraVial".vias_poligonos
+       GROUP BY material
+       ORDER BY material;
+     `);
+     const porcentajes = result.rows.map(row => {
+       let porcentaje = parseFloat(row.porcentaje);
+ 
+       if (isNaN(porcentaje)) {
+         porcentaje = 0;
+       } else {
+         porcentaje = porcentaje.toFixed(2);
+       }
+ 
+       // Usar el mapa para cambiar el número de material por su descripción
+       const descripcionMaterial = materialMap[row.material] || 'Desconocido';
+ 
+       return {
+         material: descripcionMaterial, // Aquí se usa la descripción en lugar del número
+         cantidad: row.cantidad,
+         porcentaje: porcentaje
+       };
+     });
+ 
+     res.json(porcentajes);
+   } catch (err) {
+     console.error('Error ejecutando la consulta en la segunda base de datos', err);
+     res.status(500).send('Error en el servidor');
+   }
+};
+
+exports.getLineasAltatension = async (req, res) => {
+  try {
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, empresa, nivel_volt, linea 
+      FROM "fotogrametria".lineasAltaTension_2024`;
+    
+    const result = await pool.query(query);
+
+    const features = result.rows.map(row => {
+      const { geom, ...props } = row;
+      return {
+        type: "Feature",
+        geometry: JSON.parse(geom),
+        properties: props
+      };
+    });
+
+    res.json({ type: "FeatureCollection", features });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar líneas de alta tensión' });
+  }
+};
+
+exports.getRadioBases = async (req, res) => {
+  try {
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, departamen, municipio, comunidad, direccion_ 
+      FROM "fotogrametria".radiobases_2024`;
+    const result = await pool.query(query);
+    const features = result.rows.map(row => {
+      const { geom, ...props } = row;
+      return {
+        type: "Feature",
+        geometry: JSON.parse(geom),
+        properties: props
+      };
+    });
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar las radio bases' });
   }
 };

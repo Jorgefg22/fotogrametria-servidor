@@ -20,7 +20,7 @@ function addRegisterUser() {
   divRegisterUser.innerHTML = BTN_REGISRTER_USER;
   let btn = document.getElementById("btn_register");
   btn.addEventListener("click", function () {
-    window.location.href = "/users/register";
+    window.location.href = "/register";
   });
 
 }

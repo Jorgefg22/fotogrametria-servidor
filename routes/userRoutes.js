@@ -35,16 +35,6 @@ router.get('/lector', checkNotAuthenticated, (req, res) => {
   res.render('lector', { user: req.user.name });
 });
 
-// Otras vistas
-router.get('/send-message', checkNotAuthenticated, (req, res) => {
-  res.render('send-message', { user: req.user.name, role: req.user.role_name });
-});
-router.get('/inbox', checkNotAuthenticated, (req, res) => {
-  res.render('inbox', { user: req.user.name, role: req.user.role_name });
-});
-router.get('/descargados', checkNotAuthenticated, (req, res) => {
-  res.render('descargados', { user: req.user.name, role: req.user.role_name });
-});
 
 // redirect  
 router.get('/21', checkNotAuthenticated, (req, res) => {

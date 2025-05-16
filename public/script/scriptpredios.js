@@ -1,10 +1,4 @@
 let map = L.map('map').setView([-17.403868804926827, -66.03924367573562], 13)
-// numeroGrilla = "";
-//Agregar tilelAyer mapa base desde openstreetmap
-/*L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">Geoinformatica Catastral</a> contributors'
-}).addTo(map);*/
-
 
 L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   maxZoom: 20, // Nivel máximo de zoom
@@ -14,7 +8,7 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
 
 
 
-fetch('/poligonos')
+fetch('/geo/poligonos')
   .then(response => response.json())
   .then(data => {
     let geojsonLayer = L.geoJSON(data, {
@@ -40,112 +34,30 @@ fetch('/poligonos')
 
         }
 
-        /*let center = layer.getBounds().getCenter();
-        let label = L.marker(center, {
-          icon: L.divIcon({
-            className: 'label',
-            html: feature.properties.id,
-            iconSize: [40, 20]
-          })
-        });
-
-        // Agregar el label al layer
-        layer.label = label;*/
+        
       }
     }).addTo(map);
 
-    /*map.on('zoomend', function () {
-      let zoom = map.getZoom();
-      geojsonLayer.eachLayer(function (layer) {
-        if (zoom >= 19) {
-          if (!map.hasLayer(layer.label)) {
-            map.addLayer(layer.label);
-          }
-        } else {
-          if (map.hasLayer(layer.label)) {
-            map.removeLayer(layer.label);
-          }
-        }
-      });
-    });*/
-
-    // Ejecutar el evento una vez para establecer el estado inicial
-    //map.fire('zoomend');
+   
   })
   .catch(error => console.error('Error al cargar el GeoJSON:', error));
-
-
-
-/*document.getElementById('fileInput').addEventListener('change', function (e) {
-  var file = e.target.files[0];
-
-  if (!file) return;
-
-  var reader = new FileReader();
-
-  reader.onload = function (e) {
-    var contents = e.target.result;
-
-    // Check file extension to determine format
-    if (file.name.endsWith('.geojson')) {
-      L.geoJSON(JSON.parse(contents), {
-        style: function (feature) {
-          return {
-            fillColor: 'green', // Cambiar color de relleno
-            weight: 2, // Grosor de la línea del borde
-            opacity: 1, // Opacidad del borde
-            color: 'white', // Color del borde
-            fillOpacity: 0.7 // Opacidad del relleno
-          };
-        },
-        onEachFeature: function (feature, layer) {
-          // Agregar información adicional, si es necesario
-          layer.bindPopup(feature.properties.name); // Por ejemplo, mostrar el nombre del polígono
-        }
-      }).addTo(map);
-    } else if (file.name.endsWith('.kml')) {
-      var kmlLayer = omnivore.kml.parse(contents, null, L.geoJSON(null, {
-        style: function (feature) {
-          return {
-            fillColor: 'blue',
-            weight: 2,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0.7
-          };
-        },
-        onEachFeature: function (feature, layer) {
-          layer.bindPopup(feature.properties.name);
-        }
-      }));
-      kmlLayer.addTo(map);
-    }
-  };
-
-  reader.readAsText(file);
-});*/
 
 
 var marker = L.marker([28.3949, 84.1240]).addTo(map);
 
 // search button click 
 function search() {
-
-
   var latlng = document.getElementById('search').value;
   var latlngArr = latlng.split(',');
-
   var utmZone19S = '+proj=utm +zone=19 +south +ellps=WGS84 +datum=WGS84 +units=m +no_defs';
 
   // Sistema de referencia de coordenadas: WGS84
   var wgs84 = 'EPSG:4326';
-
   var eas = parseFloat(latlngArr[0]);
   var nort = parseFloat(latlngArr[1]);
   // Coordenadas UTM
   var easting = eas;
   var northing = nort;
-
   // Convertir de UTM zona 19 Sur a WGS84
   var latLng = proj4(utmZone19S, wgs84, [easting, northing]);
 
@@ -191,9 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       descargas.forEach((descarga) => {
         const row = document.createElement('tr');
-        //    <td>${descarga.id}</td>
-        //    <td>${descarga.tamano_archivo}</td>
-        //console.log(descarga.fecha_hora)
         row.innerHTML = `
         
             <td>${descarga.nombre_archivo}</td>
