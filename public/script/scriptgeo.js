@@ -483,6 +483,8 @@ function search() {
 
       async function obtenerLevatamientos(id, button1, button2) {
 
+       let buton2d = "";
+       let buton3d = "";         
         try {
             const response = await fetch('/geo/levantamientos/' + id);
             const levatamientos = await response.json();
@@ -491,8 +493,17 @@ function search() {
 
             levatamientos.forEach((levantamiento) => {
                 const row = document.createElement('tr');
+                let fecha = quitarGuiones(levantamiento.fecha_publicacion)
+                let uni =primeraLetra(levantamiento.unidad_encargada)
+                let filename = levantamiento.id_grilla +"_"+fecha+"_"+uni;
+                if(levantamiento.unidad_encargada == "CAT"){
+                 buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                 buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript('+filename+""+ levantamiento.id_grilla + ')">Vista 3D</button>';
+                }else if(levantamiento.unidad_encargada == "OT"){
+                  buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                }
+
                 row.innerHTML = `
-                
                     <td>${levantamiento.id_grilla}</td>
                     <td>${levantamiento.fecha_publicacion}</td>
                     <td>${levantamiento.unidad_encargada}</td>
@@ -504,3 +515,11 @@ function search() {
             console.error('Error al cargar las inspecciones:', err);
         }
     }
+
+
+  function quitarGuiones(fecha) {
+    return fecha.replace(/-/g, '');
+  }
+  function primeraLetra(texto) {
+    return texto.charAt(0);
+  }
