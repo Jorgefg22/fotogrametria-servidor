@@ -16,6 +16,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const descargaRoutes = require('./routes/descargaRoutes');
 const geoRoutes = require('./routes/geoRoutes');
 const apiRoutes = require('./routes/apiRoutes');
+const mapaRoutes = require('./routes/mapaRoutes'); // ✅ NUEVO
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -39,6 +40,7 @@ app.use('/messages', messageRoutes);
 app.use('/descargas', descargaRoutes);
 app.use('/geo', geoRoutes);
 app.use('/api', apiRoutes);
+app.use('/mapa', mapaRoutes); // ✅ NUEVO
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
