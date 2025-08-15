@@ -412,7 +412,7 @@ async function obtenerLevatamientos(id) {
                  //if(obtenerAnio(fecha) == "2025" ){
                   //buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>' + buton_cesium 
                  //} else{
-                   buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>'
+                   buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' +  levantamiento.id_grilla+fecha + ')">Vista 3D</button>'
                  //}
                  
                 }else if(levantamiento.unidad_encargada == "OT"){
