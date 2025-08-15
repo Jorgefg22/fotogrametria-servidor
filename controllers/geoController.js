@@ -287,3 +287,17 @@ exports.getRadioBases = async (req, res) => {
     res.status(500).json({ error: 'Error al consultar las radio bases' });
   }
 };
+
+exports.getIdGrillasConRegistros = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT id_grilla
+       FROM "fotogrametria".levantamientofotogrametrico
+       ORDER BY id_grilla`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener id_grillas');
+  }
+};

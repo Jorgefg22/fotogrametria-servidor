@@ -16,6 +16,7 @@ router.get('/embalse', geoController.getEmbalses);
 router.get('/porcentaje-material', geoController.getPorcetajeMaterialVia);
 router.get('/alta_tension', geoController.getLineasAltatension);
 router.get('/radio_bases', geoController.getRadioBases);
+router.get('/grillas_lev_reg', geoController.getIdGrillasConRegistros);
 router.get('/inspecciones_presa/:cod_presa', checkNotAuthenticated, geoController.getInspeccionesPresa);
 router.get('/imagenes_inspeccion/:id', checkNotAuthenticated, geoController.getImagenesInspeccion);
 router.get('/levantamientos/:id_grilla', checkNotAuthenticated, geoController.getLevantamientosPorGrilla);
