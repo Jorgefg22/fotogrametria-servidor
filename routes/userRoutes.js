@@ -83,5 +83,9 @@ router.get('/geoportD7', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD7', { user: req.user.name, role: req.user.role_name });
 });
 
+router.get('/geocesium', checkNotAuthenticated, (req, res) => {
+  res.render('geocesium', { user: req.user.name, role: req.user.role_name });
+});
+
 
 module.exports = router;

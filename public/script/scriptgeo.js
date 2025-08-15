@@ -165,7 +165,7 @@ fetch('/geo/grilla24')
                               </div>`;
 
 
-                              if (feature.properties.estado_acumulativo == 4) {
+                            /*  if (feature.properties.estado_acumulativo == 4) {
                                 buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
                                 buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Vista 3D</button>';
                                 }
@@ -174,7 +174,8 @@ fetch('/geo/grilla24')
                              // }
                               if (feature.properties.estado_acumulativo == 10) {
                                  buton2d = '<a href="/descargas/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Vista 2D OT</a>';
-                              }
+                              }*/
+                              btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" style="width: 100%; onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
 
                     // Cambiar el contenido del panel del sidebar
                     document.getElementById('info-content').innerHTML = content;
@@ -481,10 +482,11 @@ function search() {
       
 
 
-      async function obtenerLevatamientos(id, button1, button2) {
+async function obtenerLevatamientos(id, button1, button2) {
 
        let buton2d = "";
-       let buton3d = "";         
+       let buton3d = ""; 
+       let buton_cesium= '<br> <a href="/users/geocesium" class="btn btn-secondary text-white btn-sm" style="font-size: 9px;" role="button">Cesium</a>';        
         try {
             const response = await fetch('/geo/levantamientos/' + id);
             const levatamientos = await response.json();
@@ -495,19 +497,25 @@ function search() {
                 const row = document.createElement('tr');
                 let fecha = quitarGuiones(levantamiento.fecha_publicacion)
                 let uni =primeraLetra(levantamiento.unidad_encargada)
-                let filename = levantamiento.id_grilla +"_"+fecha+"_"+uni;
+                let filename = levantamiento.id_grilla +"_"+fecha;
                 if(levantamiento.unidad_encargada == "CAT"){
-                 buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
-                 buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript('+filename+""+ levantamiento.id_grilla + ')">Vista 3D</button>';
+                 buton2d = '<a href="/descargas/' + filename +".ecw"+ '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                 if(obtenerAnio(fecha) == "2025" ){
+                  buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>' + buton_cesium 
+                 } else{
+                   buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>'
+                 }
+                 
                 }else if(levantamiento.unidad_encargada == "OT"){
                   buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                  buton3d = '';
                 }
 
                 row.innerHTML = `
                     <td>${levantamiento.id_grilla}</td>
                     <td>${levantamiento.fecha_publicacion}</td>
                     <td>${levantamiento.unidad_encargada}</td>
-                    <td>`+ button1 +"<br>"+button2+`</td>
+                    <td>`+ buton2d +"<br>"+buton3d+`</td>
                     `;
                 tableBody.appendChild(row);
             });
@@ -522,4 +530,10 @@ function search() {
   }
   function primeraLetra(texto) {
     return texto.charAt(0);
+  }
+  function obtenerMes(texto) {
+  return texto.substring(4, 6); // índice 4 incluido, 6 excluido
+  }
+  function obtenerAnio(texto) {
+  return texto.substring(0, 4); // índice 0 incluido, 4 excluido
   }

@@ -1,7 +1,7 @@
 function addscript(input,input2) {
     // Abrimos una nueva ventana con la segunda página HTML mediante una ruta de Express
-    var ventana = window.open('http://catastro.municipio.local/users/21', '21');
-    // Esperamos que la nueva ventana cargue
+    var ventana = window.open('http://localhost:5000/users/21', '21');
+    // Esperamos que la nueva ventana cargue http://localhost:5000/users/geoport
     ventana.onload = function () {
         // Creamos un elemento script
         var script = ventana.document.createElement('script');

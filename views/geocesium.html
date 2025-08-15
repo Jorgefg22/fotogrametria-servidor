@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cesium con herramientas y tileset local</title>
+
+  <!-- CesiumJS -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+  <!-- Herramientas -->
+  <script src="https://cdn.jsdelivr.net/npm/cesium-navigation-es6@3.0.9/dist/CesiumNavigation.umd.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/cesium-navigation-es6@3.0.9/dist/CesiumNavigation.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #toolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 10;
+    }
+
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+
+  <div id="toolbar" style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/Jorgefg22/fotogrametria-servidor/refs/heads/photos/public/images/LOGOSSIGAMOSADELANTE.png" width="100" height="100"><br>
+    <button id="measureBtn">📏 Medir distancia</button><br>
+    <button id="areaBtn">🟩 Medir área</button><br>
+    <button id="heightBtn">📏 Medir altura</button><br>
+    <button id="clearBtn">🧹 Limpiar</button>
+  </div>
+
+  <script>
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjYmU4ZmI4ZC0wOGQwLTQyYjEtYmY2OC0zODRhMzc0NmEwN2IiLCJpZCI6MjU3MzM3LCJpYXQiOjE3NDg1NTAxNDh9.uRJLZg99dVFh_0yU8xMiXDeu5HOcWpaMS4qzQdIjU74';
+
+    let viewer, handler;
+    let measurementEntities = [];
+
+    async function init() {
+      viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider: await Cesium.CesiumTerrainProvider.fromIonAssetId(1),
+        baseLayerPicker: false
+      });
+
+      new CesiumNavigation(viewer, {
+        enableCompass: true,
+        enableZoomControls: true,
+        enableDistanceLegend: true,
+      });
+
+      try {
+        const tileset = await Cesium.Cesium3DTileset.fromUrl('/TEST_CESIUM/tileset.json');
+        const alturaZ = 50; // Ajusta si es necesario
+        tileset.modelMatrix = Cesium.Matrix4.fromTranslation(
+          new Cesium.Cartesian3(0, 0, alturaZ)
+        );
+        viewer.scene.primitives.add(tileset);
+        await viewer.zoomTo(tileset);
+      } catch (error) {
+        console.error("Error cargando el tileset:", error);
+      }
+
+      setupTools();
+    }
+
+    function setupTools() {
+      document.getElementById("measureBtn").onclick = () => {
+        if (handler) handler.destroy();
+        viewer.entities.removeAll();
+        const points = [];
+        handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((click) => {
+          const position = viewer.scene.pickPosition(click.position);
+          if (!position) return;
+          viewer.entities.add({ position, point: { pixelSize: 10, color: Cesium.Color.YELLOW } });
+          points.push(position);
+          if (points.length === 2) {
+            const distance = Cesium.Cartesian3.distance(points[0], points[1]);
+            const midpoint = Cesium.Cartesian3.midpoint(points[0], points[1], new Cesium.Cartesian3());
+            const label = viewer.entities.add({
+              position: midpoint,
+              label: {
+                text: `${(distance).toFixed(2)} m`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.WHITE,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 2,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+              }
+            });
+            measurementEntities.push(label);
+            handler.destroy();
+          }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+      };
+
+      document.getElementById("areaBtn").onclick = () => {
+        if (handler) handler.destroy();
+        viewer.entities.removeAll();
+        const positions = [], hierarchy = [];
+        const tempEntities = [];
+        handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((click) => {
+          const cartesian = viewer.scene.pickPosition(click.position);
+          if (!cartesian) return;
+          positions.push(cartesian);
+          hierarchy.push(Cesium.Cartographic.fromCartesian(cartesian));
+          tempEntities.push(viewer.entities.add({
+            position: cartesian,
+            point: { pixelSize: 10, color: Cesium.Color.LIME }
+          }));
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        handler.setInputAction(() => {
+          if (positions.length < 3) return alert("Se necesitan al menos 3 puntos.");
+          const polygon = viewer.entities.add({
+            polygon: {
+              hierarchy: positions,
+              material: Cesium.Color.LIME.withAlpha(0.4),
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+              perPositionHeight: false
+            }
+          });
+          const area = computePolygonArea(hierarchy);
+          const center = getCentroid(positions);
+          const label = viewer.entities.add({
+            position: center,
+            label: {
+              text: area >= 10000 ? `${(area / 10000).toFixed(2)} ha` : `${area.toFixed(2)} m²`,
+              font: '16px sans-serif',
+              fillColor: Cesium.Color.WHITE,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+            }
+          });
+          measurementEntities.push(polygon, label, ...tempEntities);
+          handler.destroy();
+        }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+      };
+
+      document.getElementById("heightBtn").onclick = () => {
+        if (handler) handler.destroy();
+        viewer.entities.removeAll();
+        const points = [];
+        handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction((click) => {
+          const position = viewer.scene.pickPosition(click.position);
+          if (!position) return;
+          viewer.entities.add({ position, point: { pixelSize: 10, color: Cesium.Color.ORANGE } });
+          points.push(position);
+          if (points.length === 2) {
+            const h1 = Cesium.Cartographic.fromCartesian(points[0]).height;
+            const h2 = Cesium.Cartographic.fromCartesian(points[1]).height;
+            const diff = Math.abs(h2 - h1).toFixed(2);
+            const mid = Cesium.Cartesian3.midpoint(points[0], points[1], new Cesium.Cartesian3());
+            const label = viewer.entities.add({
+              position: mid,
+              label: {
+                text: `${diff} m`,
+                font: '16px sans-serif',
+                fillColor: Cesium.Color.WHITE,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 2,
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+              }
+            });
+            viewer.entities.add({
+              polyline: {
+                positions: [points[0], points[1]],
+                width: 3,
+                material: Cesium.Color.ORANGE
+              }
+            });
+            measurementEntities.push(label);
+            handler.destroy();
+          }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+      };
+
+      document.getElementById("clearBtn").onclick = () => {
+        viewer.entities.removeAll();
+        if (handler) handler.destroy();
+        measurementEntities = [];
+      };
+    }
+
+    function computePolygonArea(cartographics) {
+      const coordinates = cartographics.map(p => [
+        Cesium.Math.toDegrees(p.longitude),
+        Cesium.Math.toDegrees(p.latitude)
+      ]);
+      coordinates.push(coordinates[0]);
+      return turf.area(turf.polygon([coordinates]));
+    }
+
+    function getCentroid(points) {
+      let x = 0, y = 0, z = 0;
+      for (const p of points) {
+        x += p.x; y += p.y; z += p.z;
+      }
+      return new Cesium.Cartesian3(x / points.length, y / points.length, z / points.length);
+    }
+
+    init();
+  </script>
+</body>
+</html>
