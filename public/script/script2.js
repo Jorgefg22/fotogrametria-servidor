@@ -1,6 +1,6 @@
-function addscript(input,input2) {
+function addscript(input) {
     // Abrimos una nueva ventana con la segunda página HTML mediante una ruta de Express
-    var ventana = window.open('http://catastro.municipio.local/users/21', '21');
+    var ventana = window.open('http://10.0.38.17:4800/users/21', '21');
     // Esperamos que la nueva ventana cargue
     ventana.onload = function () {
         // Creamos un elemento script
@@ -26,7 +26,7 @@ function addscript(input,input2) {
         viewer.toggleSidebar();
         });
 
-        Potree.loadPointCloud("/pointclouds/`+input+`/metadata.json", "`+input2+`", e => {
+        Potree.loadPointCloud("/pointclouds/`+input+`/metadata.json", "`+input+`", e => {
         let scene = viewer.scene;
         let pointcloud = e.pointcloud;
 

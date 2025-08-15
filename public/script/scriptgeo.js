@@ -48,8 +48,8 @@ fetch('/geo/grilla24')
                 layer.on('click', function (e) {
                     const soloFecha = new Date(feature.properties.fecha_levantamiento).toISOString().split('T')[0];
                     var filename = feature.properties.texto + ".ecw";
-                    var buton2d = '';
-                    var buton3d = '';
+                    //var buton2d = '';
+                    //var buton3d = '';
                     var btnsoliciud = '';
                     // Aquí actualizamos el contenido del sidebar con información del polígono
                     var content = `<h2>Detalles de la grilla</h2>
@@ -166,20 +166,20 @@ fetch('/geo/grilla24')
 
 
                               if (feature.properties.estado_acumulativo == 4) {
-                                buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
-                                buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Vista 3D</button>';
+                               // buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                               // buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Vista 3D</button>';
                                 }
                               //if (feature.properties.estado_acumulativo == 0) {
                                 btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" style="width: 100%; onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
                              // }
                               if (feature.properties.estado_acumulativo == 10) {
-                                 buton2d = '<a href="/descargas/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Vista 2D OT</a>';
+                                // buton2d = '<a href="/descargas/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Vista 2D OT</a>';
                               }
 
                     // Cambiar el contenido del panel del sidebar
                     document.getElementById('info-content').innerHTML = content;
                     document.getElementById('info-general').innerHTML = btnsoliciud ;
-                    obtenerLevatamientos(feature.properties.texto,buton2d,buton3d)
+                    obtenerLevatamientos(feature.properties.texto)
                     // Abrir el sidebar
                     sidebar.open('home');
                 });
@@ -481,7 +481,7 @@ function search() {
       
 
 
-      async function obtenerLevatamientos(id, button1, button2) {
+      async function obtenerLevatamientos(id) {
 
        let buton2d = "";
        let buton3d = "";         
@@ -495,10 +495,12 @@ function search() {
                 const row = document.createElement('tr');
                 let fecha = quitarGuiones(levantamiento.fecha_publicacion)
                 let uni =primeraLetra(levantamiento.unidad_encargada)
-                let filename = levantamiento.id_grilla +"_"+fecha+"_"+uni;
+                let filename = levantamiento.id_grilla +"_"+fecha+"_"+uni+".ecw";
+                let filename3d = levantamiento.id_grilla+fecha;
+                console.log(filename3d)
                 if(levantamiento.unidad_encargada == "CAT"){
                  buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
-                 buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript('+filename+""+ levantamiento.id_grilla + ')">Vista 3D</button>';
+                 buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript('+filename3d+')">Vista 3D</button>';
                 }else if(levantamiento.unidad_encargada == "OT"){
                   buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
                 }
@@ -507,7 +509,7 @@ function search() {
                     <td>${levantamiento.id_grilla}</td>
                     <td>${levantamiento.fecha_publicacion}</td>
                     <td>${levantamiento.unidad_encargada}</td>
-                    <td>`+ button1 +"<br>"+button2+`</td>
+                    <td>`+ buton2d +"<br>"+buton3d+`</td>
                     `;
                 tableBody.appendChild(row);
             });
@@ -520,6 +522,7 @@ function search() {
   function quitarGuiones(fecha) {
     return fecha.replace(/-/g, '');
   }
+  
   function primeraLetra(texto) {
     return texto.charAt(0);
   }
