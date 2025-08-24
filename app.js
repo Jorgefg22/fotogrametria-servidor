@@ -12,7 +12,6 @@ const path = require('path');
 const fs = require('fs');
 const initializePassport = require('./pswConfig');
 const { checkRole, guardarRegistroDescarga } = require('./middleware'); // Importa el middleware de verificación de roles
-
 const { Console } = require('console');
 const { format } = require('date-fns');
 
@@ -323,15 +322,8 @@ app.get('/users/geoportVias', checkNotAuthenticated, (req, res) => {
   res.render('geoportVias', { user: req.user.name, role: req.user.role_name });
 });
 
-app.get('/users/dash', checkNotAuthenticated, (req, res) => {
-  res.render('dash', { user: req.user.name, role: req.user.role_name });
-});
-
 //ACCESO A LOS PORTALES POR DISTRITO 
 //para los usurarios root
-app.get('/users/dash', checkNotAuthenticated, checkRole('root'), (req, res) => {
-  res.render('dash', { user: req.user.name, role: req.user.role_name });
-});
 
 app.get('/users/geoportD1', checkNotAuthenticated, (req, res) => {
   res.render('distritos/geoportD1', { user: req.user.name, role: req.user.role_name });
@@ -453,7 +445,6 @@ app.get('/users/descargados', checkNotAuthenticated, async (req, res) => {
 });
 
 //grilla 24
-
 app.get('/grilla24', async (req, res) => {
   try {
     const query = `
@@ -469,7 +460,7 @@ app.get('/grilla24', async (req, res) => {
           geometry: JSON.parse(row.geom),  // GeoJSON Geometry
           properties: {
             id: row.id,
-            texto:row.texto,
+            texto: row.texto,
             distrito_a: row.distrito_a,
             levantamiento_drone: row.levantamiento_drone,
             procesamiento: row.procesamiento,
@@ -477,7 +468,7 @@ app.get('/grilla24', async (req, res) => {
             publicacion_geoportal: row.publicacion_geoportal,
             fecha_levantamiento: row.fecha_levantamiento,
             estado_acumulativo: row.estado_acumulativo
-           
+
           }
         }))
       };
@@ -508,7 +499,7 @@ app.get('/vias24', async (req, res) => {
           geometry: JSON.parse(row.geom),  // GeoJSON Geometry
           properties: {
             id: row.id,
-            distrito_c:row.distrito_c,
+            distrito_c: row.distrito_c,
             distrito_a: row.distrito_a,
             cod_via: row.cod_via,
             material: row.material,
@@ -516,7 +507,7 @@ app.get('/vias24', async (req, res) => {
             nombre_via: row.nombre_via,
             perfil_via: row.perfil_via,
             calzada: row.calzada
-           
+
           }
         }))
       };
@@ -552,9 +543,9 @@ app.get('/poligonos', async (req, res) => {
             nro_inmueb: row.nro_inmueb,
             distrito_a: row.distrito_a,
             distrito_c: row.distrito_c,
-                 clase: row.clase,
-              tipo_emp: row.tipo_emp,
-             ubicacion: row.ubicacion,
+            clase: row.clase,
+            tipo_emp: row.tipo_emp,
+            ubicacion: row.ubicacion,
             temporal: row.temporal,
             fijo: row.fijo,
             fecha: row.fecha,
@@ -562,7 +553,7 @@ app.get('/poligonos', async (req, res) => {
             tecnico: row.tecnico,
             nro_tramit: row.nro_tramit,
             zona: row.zona,
-            zonadr: row.zonadr  
+            zonadr: row.zonadr
           }
         }))
       };
@@ -765,7 +756,6 @@ app.get('/users/descargarot/:nombreArchivo', checkNotAuthenticated, (req, res) =
     }
   });
 });
-
 
 let port = process.env.PORT;
 if (port == null || port == '') {
