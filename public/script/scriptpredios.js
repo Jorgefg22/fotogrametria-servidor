@@ -8,7 +8,7 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
 
 
 
-fetch('/geo/poligonos')
+/*fetch('/geo/poligonos')
   .then(response => response.json())
   .then(data => {
     let geojsonLayer = L.geoJSON(data, {
@@ -40,7 +40,42 @@ fetch('/geo/poligonos')
 
    
   })
-  .catch(error => console.error('Error al cargar el GeoJSON:', error));
+  .catch(error => console.error('Error al cargar el GeoJSON:', error));*/
+
+  /*fetch('/geo/poligonos')
+  .then(response => response.json())
+  .then(data => {
+    let geojsonLayer = L.geoJSON(data, {
+      style: function (feature) {
+        return {
+          fillColor: '#ff540b',
+          weight: 2,
+          color: '#0d6efd',
+          fillOpacity: 0.5
+        };
+      },
+      onEachFeature: function (feature, layer) {
+        if (feature.properties && feature.properties.id) {
+          layer.bindPopup(`
+            <div><img src="/images/adt.png" width="300px" alt=""></div>
+            <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+            <ul>
+              <li>Codigo Catastral: ${feature.properties.codigo_cat}</li>
+              <li>Numero de Inmueble: ${feature.properties.nro_inmueb}</li>
+              <li>Distrito Catastral: ${feature.properties.distrito_c}</li>
+              <li>Distrito Administrativo: ${feature.properties.distrito_a}</li>
+              <li>Numero de zona: ${feature.properties.zona}</li>
+            </ul>
+          `);
+        }
+      }
+    }).addTo(map);
+
+    // 👇 esto lo manda al fondo siempre
+    geojsonLayer.bringToFront();
+  })
+  .catch(error => console.error('Error al cargar el GeoJSON:', error));*/
+
 
 
 var marker = L.marker([28.3949, 84.1240]).addTo(map);
@@ -118,113 +153,134 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-var puntosDeInteresLayer = "";
-var puntosDeInteresLayercota = "";
-
-fetch('/leaflet/area_urbana.geojson')
-  .then(response => response.json())
-  .then(data => {
-    // Crear una capa GeoJSON con el archivo cargado
-    puntosDeInteresLayer = L.geoJSON(data, {
 
 
-      style: function (feature) {
-        // Define el color del polígono según la propiedad 'estado_levantamiento'
-        return {
-          fillColor: '#9a9fa3bd', // Cambia el color dependiendo de la propiedad 'estado_levantamiento'
-          weight: 2, // Grosor del borde
-          color: '#cd3685', // Color del borde
-          fillOpacity: 0.5 // Opacidad del relleno
-        };
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.name) {
-          layer.bindPopup(feature.properties.name);
-        }
+Promise.all([
+  fetch('/leaflet/area_urbana.geojson').then(res => res.json()),
+  fetch('/leaflet/lineaCota.geojson').then(res => res.json()),
+  fetch('/leaflet/distritos_admin.geojson').then(res => res.json()),
+  fetch('/geo/manzanos').then(res => res.json()), // 👈 añadimos manzanos
+  fetch('/geo/poligonos').then(res => res.json()),
+  fetch('/geo/distritoscat').then(res => res.json())
+])
+.then(([areaUrbanaData, lineaCotaData, distritosData, manzanosData, poligonosData,distritoscatData]) => {
+  // Área Urbana
+  const puntosDeInteresLayer = L.geoJSON(areaUrbanaData, {
+    style: () => ({
+      fillColor: '#9a9fa3bd',
+      weight: 2,
+      color: '#cd3685',
+      fillOpacity: 0.5
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties && feature.properties.name) {
+        layer.bindPopup(feature.properties.name);
       }
+    }
+  });
 
-    });
+  // Línea de Cota
+  const puntosDeInteresLayercota = L.geoJSON(lineaCotaData, {
+    style: () => ({
+      fillColor: '#9a9fa3bd',
+      weight: 5,
+      color: '#cd3685',
+      fillOpacity: 0.5
+    }),
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup("<h4>Límite COTA 2750 m.s.n.m. (P.N.T.)</h4>");
+    }
+  });
 
-  })
-  .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
-
-//otro
-fetch('/leaflet/lineaCota.geojson')
-  .then(response => response.json())
-  .then(data => {
-    // Crear una capa GeoJSON con el archivo cargado
-    puntosDeInteresLayercota = L.geoJSON(data, {
-
-
-      style: function (feature) {
-        // Define el color del polígono según la propiedad 'estado_levantamiento'
-        return {
-          fillColor: '#9a9fa3bd', // Cambia el color dependiendo de la propiedad 'estado_levantamiento'
-          weight: 5, // Grosor del borde
-          color: '#cd3685', // Color del borde
-          fillOpacity: 0.5 // Opacidad del relleno
-        };
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.area) {
-          layer.bindPopup("<h4>Limite COTA 2750 m.s.n.m. (P.N.T.)</h4>");
-        }
+  // Distritos
+  const puntosDeInteresLayer2 = L.geoJSON(distritosData, {
+    style: () => ({
+      fillColor: 'black',
+      weight: 2,
+      color: '#cd3685',
+      fillOpacity: 0.5
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties && feature.properties.name) {
+        layer.bindPopup(feature.properties.name);
       }
+    }
+  });
 
-    });
-
-  })
-  .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
-
-
-fetch('/leaflet/distritos_admin.geojson')
-  .then(response => response.json())
-  .then(data => {
-    // Crear una capa GeoJSON con el archivo cargado
-    var puntosDeInteresLayer2 = L.geoJSON(data, {
-
-
-      style: function (feature) {
-        // Define el color del polígono según la propiedad 'estado_levantamiento'
-        return {
-          fillColor: 'black', // Cambia el color dependiendo de la propiedad 'estado_levantamiento'
-          weight: 2, // Grosor del borde
-          color: '#cd3685', // Color del borde
-          fillOpacity: 0.5 // Opacidad del relleno
-        };
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.name) {
-          layer.bindPopup(feature.properties.name);
-        }
+  // Manzanos
+  const manzanosLayer = L.geoJSON(manzanosData, {
+    style: () => ({
+      fillColor: '#ffcc00', // Amarillo para distinguir
+      weight: 1,
+      color: '#333',
+      fillOpacity: 0.6
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties) {
+        let popupContent = `<strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
+        popupContent += `<strong>Distrito:</strong> ${feature.properties.distrito || 'N/A'}`;
+        layer.bindPopup(popupContent);
       }
-    });
+    }
+  });
 
-    // Crear un objeto para las capas de superposición
-    var overlayLayers = {
-      'Area Urbana': puntosDeInteresLayer,
-      'Distrios': puntosDeInteresLayer2,
-      'Limite Cota': puntosDeInteresLayercota
-
+  const poligonosLayer = L.geoJSON(poligonosData, {
+  style: function (feature) {
+    return {
+      fillColor: '#ff540b',
+      weight: 2,
+      color: '#0d6efd',
+      fillOpacity: 0.5
     };
-    L.control.layers(null, overlayLayers).addTo(map);
-  })
-  .catch(error => console.error('Error cargando el archivo GeoJSON:', error));
+  },
+  onEachFeature: function (feature, layer) {
+    if (feature.properties && feature.properties.id) {
+      layer.bindPopup(`
+        <div><img src="/images/adt.png" width="300px" alt=""></div>
+        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+        <ul>
+          <li>Codigo Catastral: ${feature.properties.codigo_cat}</li>
+          <li>Numero de Inmueble: ${feature.properties.nro_inmueb}</li>
+          <li>Distrito Catastral: ${feature.properties.distrito_c}</li>
+          <li>Distrito Administrativo: ${feature.properties.distrito_a}</li>
+          <li>Numero de zona: ${feature.properties.zona}</li>
+        </ul>
+      `);
+    }
+  }
+}).addTo(map); // 👈 esto la activa por defecto
+
+  const distirtosCatLayer = L.geoJSON(distritoscatData, {
+    style: () => ({
+      fillColor: '#44df31', // Amarillo para distinguir
+      weight: 1,
+      color: '#333',
+      fillOpacity: 0.6
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties) {
+        let popupContent = `<strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
+        popupContent += `<strong>Distrito:</strong> ${feature.properties.distrito || 'N/A'}`;
+        layer.bindPopup(popupContent);
+      }
+    }
+  });
+
+  // Control de capas
+  const overlayLayers = {
+    'poligonos':poligonosLayer,
+    'Área Urbana': puntosDeInteresLayer,
+    'Distritos': puntosDeInteresLayer2,
+    'Límite Cota': puntosDeInteresLayercota,
+    'Manzanos': manzanosLayer,
+    'Distritos Cat': distirtosCatLayer
+  };
+
+  L.control.layers(null, overlayLayers).addTo(map);
+})
+.catch(error => console.error('Error cargando una de las capas GeoJSON:', error));
 
 
-var legend = L.control({ position: 'bottomright' });
-
-legend.onAdd = function (map) {
-  var div = L.DomUtil.create('div', 'legend');
-  div.innerHTML += '<h4>Leyenda</h4>';
-  div.innerHTML += '<i style="background: #ff540b"></i><span>Grilla en Levantamiento</span><br>';
-  div.innerHTML += '<i style="background: #fdec03"></i><span>Grilla en Procesamiento</span><br>';
-  div.innerHTML += '<i style="background: #1eca00"></i><span>Grilla en Post Procesamiento</span><br>';
-  div.innerHTML += '<i style="background: #0c45d6"></i><span>Grilla Completada Publicado</span><br>';
-  return div;
-};
-
-legend.addTo(map);
 
 fetch('/messages')
   .then(response => response.json())
@@ -258,22 +314,3 @@ fetch('/messages')
     });
   })
   .catch(error => console.error('Error al obtener los mensajes:', error));
-
-
-
-
-function addGrillaSolev(numeroGrilla) {
-
-  var select = document.getElementById("grilla");
-
-  // Cambia el valor de la opción seleccionada
-  var nuevoValor = numeroGrilla;
-  var nuevoTexto = "Grilla " + numeroGrilla;
-  select.options[select.selectedIndex].value = nuevoValor;
-  select.options[select.selectedIndex].text = nuevoTexto;
-
-  // Asegura que la nueva opción esté seleccionada
-  select.value = nuevoValor;
-  console.log("el numero de grilla es " + numeroGrilla);
-
-}

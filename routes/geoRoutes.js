@@ -11,6 +11,8 @@ const upload = multer({ storage })
 router.get('/grilla24', geoController.getGrilla2024);
 router.get('/vias24', geoController.getVias24);
 router.get('/poligonos', geoController.getPoligonos);
+router.get('/manzanos', geoController.getManzanas);
+router.get('/distritoscat', geoController.getDistritosCat);
 router.get('/presas', geoController.getPresas);
 router.get('/embalse', geoController.getEmbalses);
 router.get('/porcentaje-material', geoController.getPorcetajeMaterialVia);

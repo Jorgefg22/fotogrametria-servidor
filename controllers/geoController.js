@@ -81,7 +81,7 @@ exports.getVias24 = async (req, res) => {
 exports.getPoligonos = async (req, res) => {
   try {
     const query = `
-      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a, clase, tipo_emp, ubicacion,
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a, distrito_c, clase, tipo_emp, ubicacion,
              temporal, fijo, fecha, direccion_, tecnico, nro_tramit, zona, zonadr 
       FROM "sicat".predios`;
     const result = await pool.query(query);
@@ -96,6 +96,47 @@ exports.getPoligonos = async (req, res) => {
     res.status(500).json({ error: 'Error al consultar predios' });
   }
 };
+
+exports.getManzanas = async (req, res) => {
+  try {
+    const query = `SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana `;
+     
+      /*SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana*/
+    const result = await pool.query(query);
+    const features = result.rows.map(row => ({
+      type: "Feature",
+      geometry: JSON.parse(row.geom),
+      properties: { ...row }
+    }));
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar manzana' });
+  }
+};
+
+exports.getDistritosCat = async (req, res) => {
+  try {
+    const query = `SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".distritos_catastrales `;
+     
+      /*SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana*/
+    const result = await pool.query(query);
+    const features = result.rows.map(row => ({
+      type: "Feature",
+      geometry: JSON.parse(row.geom),
+      properties: { ...row }
+    }));
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar manzana' });
+  }
+};
+
 
 exports.getPresas = async (req, res) => {
   try {
