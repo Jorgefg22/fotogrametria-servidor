@@ -13,29 +13,32 @@
 	<link rel="stylesheet" type="text/css" href="/css/style.css" />
 	<link href="/css/style.css" rel="stylesheet" />
 
+
 	<link rel="icon" href="/images/favico2.png" type="image/x-icon">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
 
 	<style>
-        body {
-            padding: 0;
-            margin: 0;
-        }
+		body {
+			padding: 0;
+			margin: 0;
+		}
 
-        html,
-        body,
-        #map {
-            height: 87vh ;
-            
-        }
+		html,
+		body,
 
-        .lorem {
-            font-style: italic;
-            text-align: justify;
-            color: #AAA;
-            
-        }
-    </style>
+		#map {
+			height: 87vh;
+
+		}
+
+		.lorem {
+			font-style: italic;
+			text-align: justify;
+			color: #AAA;
+
+		}
+
+	</style>
 </head>
 
 <body style="overflow: hidden;">
@@ -73,9 +76,18 @@
 	<nav class="navbar navbar-light" style="background-color: #08477b; height: 35px; ">
 		<!-- Navbar content -->
 		<div class=" search" style="margin-left: 10px; margin-top: -8px;">
-			<input title="814585.34,8073319.62" id="search" type="text" placeholder="Insertar coordenadas X,Y"
-				style="border-radius: 5px; margin-bottom: 10px;">
+			<!--input title="814585.34,8073319.62" id="search" type="text" placeholder="Insertar Codigo Catastral"
+				style="border-radius: 5px; margin-bottom: 10px;"-->
+				<input id="search" list="codigosList" type="text" placeholder="Insertar Código Catastral"
+       style="border-radius: 5px; margin-bottom: 10px;">
 			<button id="search-btn" onclick="search()" style="border-radius: 5px;">Buscar</button>
+
+				
+
+<datalist id="codigosList"></datalist>
+
+			
+
 
 			<button class="upload-btn" style="background-color: #08477b; border-style: none;"
 				onclick="document.getElementById('fileInput').click()">
@@ -84,8 +96,9 @@
 			<input type="file" id="fileInput" style="display: none;">
 
 		</div>
-		<div  data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" onclick="addNametocircle()" style="margin-right: 0.8%;">
-			
+		<div data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight"
+			onclick="addNametocircle()" style="margin-right: 0.8%;">
+
 			<label id="usuario" style="color: aliceblue;margin-bottom: 10px;">
 				<%= user %>
 			</label>
@@ -146,7 +159,7 @@
 				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal">
 					Ver Descargas
 				</button>
-				
+
 				<div class="dropdown" id="distritos">
 				</div>
 
@@ -156,10 +169,10 @@
 				<div id="portal_predios">
 				</div>
 
-				<div id="portal_vias">					
+				<div id="portal_vias">
 				</div>
-				
-				<div id="portal_cuencas">					
+
+				<div id="portal_cuencas">
 				</div>
 			</div>
 			<div>
@@ -225,18 +238,19 @@
 
 						<label for="receiver_id" class="">Se Solicita a:</label>
 						<select id="receiver_id" name="receiver_id" class="form-control" required>
-							<option value="2"  selected>Area de Administracion de Tierras y Geoinformatica</option>
+							<option value="2" selected>Area de Administracion de Tierras y Geoinformatica</option>
 						</select>
 						<br>
 						<label for="grilla" class="">El levantamiendo fotogrametrico en 2D y 3D de la</label>
 						<select id="grilla" name="grilla" class="form-control" required>
-							<option value="169"  selected>Grilla 169</option>
+							<option value="169" selected>Grilla 169</option>
 						</select>
 						<br>
 						<label for="content">Motivo de levantamiento:</label><br>
 						<textarea id="content" name="content" required style="width: 100%;"></textarea>
 						<br>
-						<button type="submit" class="btn btn-primary btn-sm d-block mx-auto" >&nbsp;&nbsp;&nbsp;&nbsp;Enviar&nbsp;&nbsp;&nbsp;&nbsp;</button>
+						<button type="submit"
+							class="btn btn-primary btn-sm d-block mx-auto">&nbsp;&nbsp;&nbsp;&nbsp;Enviar&nbsp;&nbsp;&nbsp;&nbsp;</button>
 					</form>
 				</div>
 				<div class="modal-footer">
@@ -260,17 +274,17 @@
 					<!--ul id="messages"></ul-->
 					<table class="table table-striped">
 						<thead>
-						  <tr>
-							<th>De</th>
-							<th>Motivo de Levantaiento</th>
-							<th>Fecha</th>
-							<th>Grilla</th> <!-- Nueva columna para Grid -->
-						  </tr>
+							<tr>
+								<th>De</th>
+								<th>Motivo de Levantaiento</th>
+								<th>Fecha</th>
+								<th>Grilla</th> <!-- Nueva columna para Grid -->
+							</tr>
 						</thead>
 						<tbody id="messages">
-						  <!-- Aquí se insertarán las filas de mensajes -->
+							<!-- Aquí se insertarán las filas de mensajes -->
 						</tbody>
-					  </table>
+					</table>
 
 				</div>
 				<div class="modal-footer">

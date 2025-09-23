@@ -2,13 +2,13 @@ const { pool } = require('../config');
 const { format } = require('date-fns');
 
 exports.sendMessage = async (req, res) => {
-  const { receiver_id, content, grilla } = req.body;
+  const { receiver_id, content, grilla_sol_lev } = req.body;
   const sender_id = req.user.id;
   const timestamp = new Date();
   try {
     await pool.query(
       'INSERT INTO "learnerlogin".messages (sender_id, receiver_id, content, grilla, timestamp) VALUES ($1, $2, $3, $4, $5)',
-      [sender_id, receiver_id, content, grilla, timestamp]
+      [sender_id, receiver_id, content, grilla_sol_lev, timestamp]
     );
     res.redirect('/users/geoport');
   } catch (err) {

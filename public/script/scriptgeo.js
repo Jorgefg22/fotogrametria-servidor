@@ -10,6 +10,12 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
 // Crear el sidebar y agregarlo al mapa
 var sidebar = L.control.sidebar({ container: 'sidebar' }).addTo(map).open('home');
 
+let list_Levs_reg = "";
+(async () => {
+  list_Levs_reg = await obtenerIdGrillas();
+  console.log("Lista cargada:", list_Levs_reg);
+})();
+
 // Cargar los datos GeoJSON
 var  geojsonLayer  = "";
 fetch('/geo/grilla24')
@@ -17,12 +23,13 @@ fetch('/geo/grilla24')
     .then(data => {
         // Agregar los datos GeoJSON al mapa y agregar el evento click
         geojsonLayer = L.geoJSON(data, {
+          
             style: function (feature) {
                 // Define el color del polígono según la propiedad 'estado_levantamiento'
                 let fillColor;
 
                 // Primer if para determinar el color de relleno
-                if (feature.properties.estado_acumulativo == 0) {
+                /*if (feature.properties.estado_acumulativo == 0) {
                   fillColor = '#ababab';
                 } else if (feature.properties.estado_acumulativo == 1) {
                   fillColor = '#ff540b';
@@ -34,8 +41,15 @@ fetch('/geo/grilla24')
                   fillColor = '#0c45d6';
                 }else if (feature.properties.estado_acumulativo == 10) {
                   fillColor = '#66a3d5';//348567
-                }
+                }*/
                 // Retornar el objeto de estilo  #348567
+
+                if (list_Levs_reg.includes(Number(feature.properties.texto))) {
+                  fillColor = '#efeb39';
+                } else {
+                  fillColor = '#ababab';
+                }
+
                 return {
                   fillColor: fillColor, // Utiliza el color determinado por el if anterior
                   weight: 2, // Grosor del borde
@@ -47,10 +61,6 @@ fetch('/geo/grilla24')
                 // Asignar un evento de clic a cada polígono
                 layer.on('click', function (e) {
                     const soloFecha = new Date(feature.properties.fecha_levantamiento).toISOString().split('T')[0];
-                    var filename = feature.properties.texto + ".ecw";
-                    var buton2d = '';
-                    var buton3d = '';
-                    var btnsoliciud = '';
                     // Aquí actualizamos el contenido del sidebar con información del polígono
                     var content = `<h2>Detalles de la grilla</h2>
                                <p><strong>ID:</strong> ${feature.properties.estado_acumulativo}</p>
@@ -65,122 +75,15 @@ fetch('/geo/grilla24')
                                 <li class="list-group-item">${soloFecha}</li>
                                 <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Fecha Definicion de Via</li>
                                 <li class="list-group-item">${feature.properties.estado_acumulativo}</li>
-                                </ul> <br>`;
-
-                    var contentGeneral = `<a class="btn btn-primary" data-bs-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1" style="color: white; width: 100%;">Informacion Tecnica - Servicios</a>
-                                
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="collapse multi-collapse" id="multiCollapseExample1">
-                                          <br>
-                                        <form class="row g-3">
-                                                <div class="form-group">
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Calzada de Via</li>
-                                                    </ul>
-                                                    <input type="text" class="form-control" id="nombre_via"  placeholder="Ingrese la calzada de Via">
-                                                </div>
-                                                 <div class="form-group">
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Clase de espacio</li>
-                                                    </ul>
-                                                    <input type="text" class="form-control" id="clase_espacio"  placeholder="Ingrese la clase de espacio">
-                                                </div>
-                                                 <div class="form-group">
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Tipo de Via</li>
-                                                    </ul>
-                                                    <input type="text" class="form-control" id="tipo_via"  placeholder="Ingrese tipo de Via">
-                                                </div>
-                                                 <div class="form-group">
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Acera</li>
-                                                    </ul>
-                                                    <input type="text" class="form-control" id="acera_via"  placeholder="Ingrese la Acera">
-                                                </div>
-
-                                                 <div class="form-group">
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Servicio de Agua</li>
-                                                    </ul>
-                                                    <select id="role" name="role" class="form-control" required>
-                                                    <option value="" disabled selected>Seleccionar Rol </option>
-                                                    <option value="publico">Publico</option>
-                                                    <option value="privado">privado</option>
-                                                    </select>
-
-                                                </div>
-                                                 <div class="form-group">
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item list-group-item-action list-group-item-primary" aria-current="true">Servicios</li>
-                                                    </ul>
-
-                                                    <ul class="list-group">
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                         Agua
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                        Energia Electrica
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                        Alcantarillado
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                        Gas Domiciliario
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                       Telefono
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                       Internet ADSI
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                      Internet fibra Optica
-                                                    </li>
-                                                    <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                       Recojo de Basura
-                                                    </li>
-                                                     <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                       Alumbrado Publico
-                                                    </li>
-                                                     <li class="list-group-item">
-                                                        <input class="form-check-input me-1" type="checkbox" value="" aria-label="...">
-                                                       Transporte publico
-                                                    </li>
-                                                    </ul>
-                                                </div>
-                                                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit</button>
-                                            </form>
-
-                                     </div>
-                              </div>`;
-
-
-                            /*  if (feature.properties.estado_acumulativo == 4) {
-                                buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
-                                buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + feature.properties.texto + ')">Vista 3D</button>';
-                                }
-                              //if (feature.properties.estado_acumulativo == 0) {
-                                btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" style="width: 100%; onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
-                             // }
-                              if (feature.properties.estado_acumulativo == 10) {
-                                 buton2d = '<a href="/descargas/descargarot/' + filename + '"  class="btn btn-primary text-white btn-sm" role="button">Vista 2D OT</a>';
-                              }*/
-                              btnsoliciud = '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" style="width: 100%; onclick = "addGrillaSolev(' + feature.properties.texto + ')">Solicitar Levantamiento</button>'
+                                </ul> <br>
+                                <br>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#descargasModal2" style="width: 100%; onclick = "addGrillaSolev(${feature.properties.texto})">Solicitar Levantamiento</button>`;
+                                addGrillaSolev(feature.properties.texto)
 
                     // Cambiar el contenido del panel del sidebar
                     document.getElementById('info-content').innerHTML = content;
-                    document.getElementById('info-general').innerHTML = btnsoliciud ;
-                    obtenerLevatamientos(feature.properties.texto,buton2d,buton3d)
+                   // document.getElementById('info-general').innerHTML = btnsoliciud ;
+                    obtenerLevatamientos(feature.properties.texto)
                     // Abrir el sidebar
                     sidebar.open('home');
                 });
@@ -261,17 +164,23 @@ function search() {
   };
   
 
-  function addGrillaSolev(numeroGrilla) {
-    var select = document.getElementById("grilla");
-    // Cambia el valor de la opción seleccionada
-    var nuevoValor = numeroGrilla;
-    var nuevoTexto = "Grilla " + numeroGrilla;
-    select.options[select.selectedIndex].value = nuevoValor;
-    select.options[select.selectedIndex].text = nuevoTexto;
-    // Asegura que la nueva opción esté seleccionada
-    select.value = nuevoValor;
-    console.log("el numero de grilla es " + numeroGrilla);
-  }
+function addGrillaSolev(numeroGrilla) {
+
+  var select = document.getElementById("grilla_sol_lev");
+
+  // Cambia el valor de la opción seleccionada
+  var nuevoValor = numeroGrilla;
+  var nuevoTexto = "Grilla " + numeroGrilla;
+  select.options[select.selectedIndex].value = nuevoValor;
+  select.options[select.selectedIndex].text = nuevoTexto;
+
+  // Asegura que la nueva opción esté seleccionada
+  select.value = nuevoValor;
+  console.log("el numero de grilla es " + numeroGrilla);
+
+}
+
+  
 
   function addNametocircle() {
     var usuario = document.getElementById('usuario').innerText;
@@ -482,7 +391,7 @@ function search() {
       
 
 
-async function obtenerLevatamientos(id, button1, button2) {
+async function obtenerLevatamientos(id) {
 
        let buton2d = "";
        let buton3d = ""; 
@@ -499,15 +408,15 @@ async function obtenerLevatamientos(id, button1, button2) {
                 let uni =primeraLetra(levantamiento.unidad_encargada)
                 let filename = levantamiento.id_grilla +"_"+fecha;
                 if(levantamiento.unidad_encargada == "CAT"){
-                 buton2d = '<a href="/descargas/' + filename +".ecw"+ '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
-                 if(obtenerAnio(fecha) == "2025" ){
-                  buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>' + buton_cesium 
-                 } else{
-                   buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>'
-                 }
+                 buton2d = '<a href="/descargas/' + filename +"_C"+ ".ecw"+ '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                 //if(obtenerAnio(fecha) == "2025" ){
+                  //buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>' + buton_cesium 
+                 //} else{
+                   buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' +  levantamiento.id_grilla+fecha + ')">Vista 3D</button>'
+                 //}
                  
                 }else if(levantamiento.unidad_encargada == "OT"){
-                  buton2d = '<a href="/descargas/' + filename + '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                  buton2d = '<a href="/descargas/' + filename +"_OT"+ '.ecw" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
                   buton3d = '';
                 }
 
@@ -537,3 +446,16 @@ async function obtenerLevatamientos(id, button1, button2) {
   function obtenerAnio(texto) {
   return texto.substring(0, 4); // índice 0 incluido, 4 excluido
   }
+
+async function obtenerIdGrillas() {
+  try {
+    const response = await fetch('/geo/grillas_lev_reg');
+    if (!response.ok) throw new Error('Error en la petición');
+    const data = await response.json();    
+    let listaIdGrillas = data.map(item => item.id_grilla)
+    return listaIdGrillas;
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+

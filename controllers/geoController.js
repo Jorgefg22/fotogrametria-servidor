@@ -81,7 +81,7 @@ exports.getVias24 = async (req, res) => {
 exports.getPoligonos = async (req, res) => {
   try {
     const query = `
-      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a, clase, tipo_emp, ubicacion,
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, distrito_a, distrito_c, clase, tipo_emp, ubicacion,
              temporal, fijo, fecha, direccion_, tecnico, nro_tramit, zona, zonadr 
       FROM "sicat".predios`;
     const result = await pool.query(query);
@@ -96,6 +96,85 @@ exports.getPoligonos = async (req, res) => {
     res.status(500).json({ error: 'Error al consultar predios' });
   }
 };
+
+
+exports.searchPoligonos = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search) {
+      return res.status(400).json({ error: 'Debe enviar un parámetro de búsqueda' });
+    }
+
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, 
+             distrito_a, distrito_c, clase, tipo_emp, ubicacion,
+             temporal, fijo, fecha, direccion_, tecnico, nro_tramit, zona, zonadr 
+      FROM "sicat".predios
+      WHERE CAST(codigo_cat AS TEXT) ILIKE $1
+         OR CAST(nro_inmueb AS TEXT) ILIKE $1
+    `;
+
+    const result = await pool.query(query, [`%${search}%`]);
+
+    const features = result.rows.map(row => {
+      const { geom, ...props } = row;
+      return {
+        type: "Feature",
+        geometry: JSON.parse(geom),
+        properties: props
+      };
+    });
+
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al buscar predios' });
+  }
+};
+
+
+
+exports.getManzanas = async (req, res) => {
+  try {
+    const query = `SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana `;
+     
+      /*SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana*/
+    const result = await pool.query(query);
+    const features = result.rows.map(row => ({
+      type: "Feature",
+      geometry: JSON.parse(row.geom),
+      properties: { ...row }
+    }));
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar manzana' });
+  }
+};
+
+exports.getDistritosCat = async (req, res) => {
+  try {
+    const query = `SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".distritos_catastrales `;
+     
+      /*SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana*/
+    const result = await pool.query(query);
+    const features = result.rows.map(row => ({
+      type: "Feature",
+      geometry: JSON.parse(row.geom),
+      properties: { ...row }
+    }));
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar manzana' });
+  }
+};
+
 
 exports.getPresas = async (req, res) => {
   try {
@@ -285,5 +364,19 @@ exports.getRadioBases = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al consultar las radio bases' });
+  }
+};
+
+exports.getIdGrillasConRegistros = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT id_grilla
+       FROM "fotogrametria".levantamientofotogrametrico
+       ORDER BY id_grilla`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener id_grillas');
   }
 };
