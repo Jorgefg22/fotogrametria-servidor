@@ -7,77 +7,6 @@ L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
 }).addTo(map);
 
 
-
-/*fetch('/geo/poligonos')
-  .then(response => response.json())
-  .then(data => {
-    let geojsonLayer = L.geoJSON(data, {
-      style: function (feature) {
-        return {
-          fillColor: '#ff540b',
-          weight: 2,
-          color: '#0d6efd',
-          fillOpacity: 0.5
-        };
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.id) {
-          layer.bindPopup('<div><img src="/images/adt.png" width="300px" alt=""></div>' +
-            '<div><h6>Gobierno Autonomo Municipal de Sacaba</h6>' +
-            '<ul><li>Codigo Catastral: ' + feature.properties.codigo_cat + '</li>' +
-            '<li>Numero de Inmueble: ' + feature.properties.nro_inmueb + '</li>' +
-            '<li>Distrito Catastral: ' + feature.properties.distrito_c + '</li>' +
-            '<li>Distrito Administrativo: ' + feature.properties.distrito_a + '</li>' +
-            '<li>Numero de zona: ' + feature.properties.zona + '</li></ul>');
-           // '<h6>Subir una imagen para un Predio</h6><form action="/upload" method="post" enctype="multipart/form-data"><label>Código Catastro del Predio: </label><span id="codigo_cat_display">'+ feature.properties.codigo_cat +'</span><label for="image">Selecciona una imagen:</label><input type="file" id="image" name="image" required><br><input type="hidden" id="codigo_cat" name="codigo_cat" value="'+ feature.properties.codigo_cat +'"><button type="submit">Subir Imagen</button></form>'+
-          //'<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">imagenes cargadas</button></p><div class="collapse" id="collapseExample"><div class="card card-body"><div><ul><% images.forEach(image => { %><li><a href="/image/<%= image.id %>"><%= image.nombre %></a></li><% }) %></ul><br> </div></div></div>');
-
-        }
-
-        
-      }
-    }).addTo(map);
-
-   
-  })
-  .catch(error => console.error('Error al cargar el GeoJSON:', error));*/
-
-  /*fetch('/geo/poligonos')
-  .then(response => response.json())
-  .then(data => {
-    let geojsonLayer = L.geoJSON(data, {
-      style: function (feature) {
-        return {
-          fillColor: '#ff540b',
-          weight: 2,
-          color: '#0d6efd',
-          fillOpacity: 0.5
-        };
-      },
-      onEachFeature: function (feature, layer) {
-        if (feature.properties && feature.properties.id) {
-          layer.bindPopup(`
-            <div><img src="/images/adt.png" width="300px" alt=""></div>
-            <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
-            <ul>
-              <li>Codigo Catastral: ${feature.properties.codigo_cat}</li>
-              <li>Numero de Inmueble: ${feature.properties.nro_inmueb}</li>
-              <li>Distrito Catastral: ${feature.properties.distrito_c}</li>
-              <li>Distrito Administrativo: ${feature.properties.distrito_a}</li>
-              <li>Numero de zona: ${feature.properties.zona}</li>
-            </ul>
-          `);
-        }
-      }
-    }).addTo(map);
-
-    // 👇 esto lo manda al fondo siempre
-    geojsonLayer.bringToFront();
-  })
-  .catch(error => console.error('Error al cargar el GeoJSON:', error));*/
-
-
-
 var marker = L.marker([28.3949, 84.1240]).addTo(map);
 
 // search button click 
@@ -153,8 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-
-
+let poligonosDataGlobal = null
+var highlightLayer = null;
+var poligonosLayer = null;
 Promise.all([
   fetch('/leaflet/area_urbana.geojson').then(res => res.json()),
   fetch('/leaflet/lineaCota.geojson').then(res => res.json()),
@@ -164,6 +94,7 @@ Promise.all([
   fetch('/geo/distritoscat').then(res => res.json())
 ])
 .then(([areaUrbanaData, lineaCotaData, distritosData, manzanosData, poligonosData,distritoscatData]) => {
+  poligonosDataGlobal = poligonosData
   // Área Urbana
   const puntosDeInteresLayer = L.geoJSON(areaUrbanaData, {
     style: () => ({
@@ -217,14 +148,16 @@ Promise.all([
     }),
     onEachFeature: (feature, layer) => {
       if (feature.properties) {
-        let popupContent = `<strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
-        popupContent += `<strong>Distrito:</strong> ${feature.properties.distrito || 'N/A'}`;
+        let popupContent = `<div><img src="/images/adt.png" width="300px" alt=""></div>
+        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+        <strong>Cod Manzana:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
+       
         layer.bindPopup(popupContent);
       }
     }
   });
 
-  const poligonosLayer = L.geoJSON(poligonosData, {
+  poligonosLayer = L.geoJSON(poligonosData, {
   style: function (feature) {
     return {
       fillColor: '#ff540b',
@@ -259,8 +192,12 @@ Promise.all([
     }),
     onEachFeature: (feature, layer) => {
       if (feature.properties) {
-        let popupContent = `<strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
-        popupContent += `<strong>Distrito:</strong> ${feature.properties.distrito || 'N/A'}`;
+        
+        let popupContent = `
+        <div><img src="/images/adt.png" width="300px" alt=""></div>
+        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+        <strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
+        popupContent += `<strong>Distrito cat:</strong> ${feature.properties.nombre || 'N/A'}`;
         layer.bindPopup(popupContent);
       }
     }
@@ -275,7 +212,7 @@ Promise.all([
     'Manzanos': manzanosLayer,
     'Distritos Cat': distirtosCatLayer
   };
-
+ cargarCodigos();
   L.control.layers(null, overlayLayers).addTo(map);
 })
 .catch(error => console.error('Error cargando una de las capas GeoJSON:', error));
@@ -314,3 +251,68 @@ fetch('/messages')
     });
   })
   .catch(error => console.error('Error al obtener los mensajes:', error));
+
+
+
+function search() {
+  const codigo = document.getElementById("search").value.trim();
+  if (!codigo || !poligonosDataGlobal) return;
+
+  const feature = poligonosDataGlobal.features.find(
+    f => f.properties.codigo_cat == codigo
+  );
+
+  if (!feature) {
+    alert("No se encontró el código: " + codigo);
+    return;
+  }
+
+  // Quitar highlight anterior
+  if (highlightLayer) {
+    map.removeLayer(highlightLayer);
+  }
+
+  // Crear highlight con popup
+  highlightLayer = L.geoJSON(feature, {
+    style: {
+      color: 'yellow',
+      weight: 4,
+      fillColor: 'red',
+      fillOpacity: 0.7
+    },
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup(`
+        <div><img src="/images/adt.png" width="300px" alt=""></div>
+        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+        <ul>
+          <li>Codigo Catastral: ${feature.properties.codigo_cat}</li>
+          <li>Numero de Inmueble: ${feature.properties.nro_inmueb}</li>
+          <li>Distrito Catastral: ${feature.properties.distrito_c}</li>
+          <li>Distrito Administrativo: ${feature.properties.distrito_a}</li>
+          <li>Numero de zona: ${feature.properties.zona}</li>
+        </ul>
+      `);
+    }
+  }).addTo(map);
+
+  map.fitBounds(highlightLayer.getBounds());
+
+  // Abrir popup de highlight directamente
+  highlightLayer.eachLayer(l => l.openPopup());
+}
+
+
+function cargarCodigos() {
+  if (!poligonosDataGlobal) return;
+
+  const datalist = document.getElementById("codigosList");
+  datalist.innerHTML = ""; // limpiar
+
+  poligonosDataGlobal.features.forEach(f => {
+    if (f.properties && f.properties.codigo_cat) {
+      const option = document.createElement("option");
+      option.value = f.properties.codigo_cat;
+      datalist.appendChild(option);
+    }
+  });
+}

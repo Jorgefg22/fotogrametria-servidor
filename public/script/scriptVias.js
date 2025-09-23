@@ -210,7 +210,7 @@
 
     async function obtenerPorcentajeMaterial() {
         try {
-            const response = await fetch('  /porcentaje-material');
+            const response = await fetch('  /geo/porcentaje-material');
             if (!response.ok) {
                 throw new Error('Error en la respuesta de la API');
             }

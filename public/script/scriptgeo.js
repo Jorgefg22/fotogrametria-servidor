@@ -408,7 +408,7 @@ async function obtenerLevatamientos(id) {
                 let uni =primeraLetra(levantamiento.unidad_encargada)
                 let filename = levantamiento.id_grilla +"_"+fecha;
                 if(levantamiento.unidad_encargada == "CAT"){
-                 buton2d = '<a href="/descargas/' + filename +"_CAT"+ ".ecw"+ '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
+                 buton2d = '<a href="/descargas/' + filename +"_C"+ ".ecw"+ '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
                  //if(obtenerAnio(fecha) == "2025" ){
                   //buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>' + buton_cesium 
                  //} else{

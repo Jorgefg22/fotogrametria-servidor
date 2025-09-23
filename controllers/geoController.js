@@ -97,6 +97,44 @@ exports.getPoligonos = async (req, res) => {
   }
 };
 
+
+exports.searchPoligonos = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    if (!search) {
+      return res.status(400).json({ error: 'Debe enviar un parámetro de búsqueda' });
+    }
+
+    const query = `
+      SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, objectid, codigo_cat, nro_inmueb, 
+             distrito_a, distrito_c, clase, tipo_emp, ubicacion,
+             temporal, fijo, fecha, direccion_, tecnico, nro_tramit, zona, zonadr 
+      FROM "sicat".predios
+      WHERE CAST(codigo_cat AS TEXT) ILIKE $1
+         OR CAST(nro_inmueb AS TEXT) ILIKE $1
+    `;
+
+    const result = await pool.query(query, [`%${search}%`]);
+
+    const features = result.rows.map(row => {
+      const { geom, ...props } = row;
+      return {
+        type: "Feature",
+        geometry: JSON.parse(geom),
+        properties: props
+      };
+    });
+
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al buscar predios' });
+  }
+};
+
+
+
 exports.getManzanas = async (req, res) => {
   try {
     const query = `SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
