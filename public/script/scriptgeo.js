@@ -409,11 +409,11 @@ async function obtenerLevatamientos(id) {
                 let filename = levantamiento.id_grilla +"_"+fecha;
                 if(levantamiento.unidad_encargada == "CAT"){
                  buton2d = '<a href="/descargas/' + filename +"_C"+ ".ecw"+ '" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
-                 //if(obtenerAnio(fecha) == "2025" ){
-                  //buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' + "194" + ')">Vista 3D</button>' + buton_cesium 
-                 //} else{
+                 if(obtenerAnio(fecha) == "2025" || obtenerAnio(fecha) == "2024" ){
                    buton3d = '<button class="btn btn-warning btn-sm" style="font-size: 9px;" id="btnAgregarScript" onclick="addscript(' +  levantamiento.id_grilla+fecha + ')">Vista 3D</button>'
-                 //}
+                 } else{
+                   buton3d = ""
+                 }
                  
                 }else if(levantamiento.unidad_encargada == "OT"){
                   buton2d = '<a href="/descargas/' + filename +"_OT"+ '.ecw" class="btn btn-primary text-white btn-sm" style="font-size: 9px;" role="button">Vista 2D</a>';
