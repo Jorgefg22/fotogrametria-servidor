@@ -14,6 +14,7 @@ router.get('/poligonos', geoController.getPoligonos);
 router.get('/searchPoligono', geoController.searchPoligonos);
 router.get('/manzanos', geoController.getManzanas);
 router.get('/distritoscat', geoController.getDistritosCat);
+router.get('/distritosadm', geoController.getDistritosAdm);
 router.get('/presas', geoController.getPresas);
 router.get('/embalse', geoController.getEmbalses);
 router.get('/porcentaje-material', geoController.getPorcetajeMaterialVia);

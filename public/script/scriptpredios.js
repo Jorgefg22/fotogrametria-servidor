@@ -88,12 +88,14 @@ var poligonosLayer = null;
 Promise.all([
   fetch('/leaflet/area_urbana.geojson').then(res => res.json()),
   fetch('/leaflet/lineaCota.geojson').then(res => res.json()),
-  fetch('/leaflet/distritos_admin.geojson').then(res => res.json()),
+  fetch('/geo/distritosadm').then(res => res.json()),
   fetch('/geo/manzanos').then(res => res.json()), // 👈 añadimos manzanos
   fetch('/geo/poligonos').then(res => res.json()),
-  fetch('/geo/distritoscat').then(res => res.json())
+  fetch('/geo/distritoscat').then(res => res.json()),
+  fetch('/geo/vias24').then(res => res.json()),
+  fetch('/geo/grilla24').then(res => res.json())
 ])
-.then(([areaUrbanaData, lineaCotaData, distritosData, manzanosData, poligonosData,distritoscatData]) => {
+.then(([areaUrbanaData, lineaCotaData, distritosData, manzanosData, poligonosData,distritoscatData,vias24Data,grilla24Data]) => {
   poligonosDataGlobal = poligonosData
   // Área Urbana
   const puntosDeInteresLayer = L.geoJSON(areaUrbanaData, {
@@ -125,18 +127,39 @@ Promise.all([
 
   // Distritos
   const puntosDeInteresLayer2 = L.geoJSON(distritosData, {
-    style: () => ({
-      fillColor: 'black',
-      weight: 2,
-      color: '#cd3685',
-      fillOpacity: 0.5
-    }),
-    onEachFeature: (feature, layer) => {
-      if (feature.properties && feature.properties.name) {
-        layer.bindPopup(feature.properties.name);
-      }
+  style: () => ({
+    fillColor: 'black',
+    weight: 2,
+    color: '#cd3685',
+    fillOpacity: 0.5
+  }),
+  onEachFeature: (feature, layer) => {
+    if (feature.properties && feature.properties.nombre_dis) {
+      // Popup normal
+      layer.bindPopup(`<strong>Nombre:</strong> ${feature.properties.nombre_dis || 'N/A'}<br>`);
+
+      // Centroide aproximado
+      const center = layer.getBounds().getCenter();
+
+      // El "label" se agrega como parte del layer de distritos
+      const label = L.marker(center, {
+        icon: L.divIcon({
+          className: 'label-distrito',
+          html: `<div style="color:white; font-weight:bold; text-shadow: 1px 1px 2px black;">${feature.properties.nombre_dis}</div>`
+        }),
+        interactive: false // evita que interfiera con clics
+      });
+
+      // Vincular el marcador al polígono para que obedezca al control de capas
+      layer.on('add', () => {
+        map.addLayer(label);
+      });
+      layer.on('remove', () => {
+        map.removeLayer(label);
+      });
     }
-  });
+  }
+});
 
   // Manzanos
   const manzanosLayer = L.geoJSON(manzanosData, {
@@ -183,6 +206,8 @@ Promise.all([
   }
 }).addTo(map); // 👈 esto la activa por defecto
 
+
+
   const distirtosCatLayer = L.geoJSON(distritoscatData, {
     style: () => ({
       fillColor: '#44df31', // Amarillo para distinguir
@@ -203,6 +228,40 @@ Promise.all([
     }
   });
 
+  // grilla
+  const grillaLayer = L.geoJSON(grilla24Data, {
+    style: () => ({
+      fillColor: 'black',
+      weight: 2,
+      color: '#333',
+      fillOpacity: 0.2
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties && feature.properties.texto) {
+         layer.bindPopup(`<strong>nombre:</strong> ${feature.properties.texto || 'N/A'}<br>`);
+      }
+    }
+  });
+
+  // vias
+  const viasLayer = L.geoJSON(vias24Data, {
+    style: () => ({
+      fillColor: '#e034e9', // Amarillo para distinguir
+      weight: 1,
+      color: '#333',
+      fillOpacity: 0.6
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties) {
+        let popupContent = `<div><img src="/images/adt.png" width="300px" alt=""></div>
+        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+        <strong>Cod Manzana:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
+       
+        layer.bindPopup(popupContent);
+      }
+    }
+  });
+
   // Control de capas
   const overlayLayers = {
     'poligonos':poligonosLayer,
@@ -210,7 +269,9 @@ Promise.all([
     'Distritos': puntosDeInteresLayer2,
     'Límite Cota': puntosDeInteresLayercota,
     'Manzanos': manzanosLayer,
-    'Distritos Cat': distirtosCatLayer
+    'Distritos Cat': distirtosCatLayer,
+    'grillas ref.': grillaLayer,
+    'vias ref': viasLayer
   };
  cargarCodigos();
   L.control.layers(null, overlayLayers).addTo(map);

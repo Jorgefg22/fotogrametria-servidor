@@ -299,7 +299,7 @@ function addGrillaSolev(numeroGrilla) {
         fetch('/leaflet/lineaCota.geojson').then(res => res.json()),
         fetch('/geo/radio_bases').then(res => res.json()),
         fetch('/geo//alta_tension').then(res => res.json()),
-        fetch('/leaflet/distritos_admin.geojson').then(res => res.json())
+        fetch('/geo/distritosadm').then(res => res.json())
       ])
       .then(([areaUrbanaData, lineaCotaData, radioBasesData, altaTensionData, distritosData]) => {
         const puntosDeInteresLayer = L.geoJSON(areaUrbanaData, {
@@ -361,7 +361,7 @@ function addGrillaSolev(numeroGrilla) {
               }
             }
           });
-        const puntosDeInteresLayer2 = L.geoJSON(distritosData, {
+       /* const puntosDeInteresLayer2 = L.geoJSON(distritosData, {
           style: () => ({
             fillColor: 'black',
             weight: 2,
@@ -369,11 +369,47 @@ function addGrillaSolev(numeroGrilla) {
             fillOpacity: 0.5
           }),
           onEachFeature: (feature, layer) => {
-            if (feature.properties && feature.properties.name) {
-              layer.bindPopup(feature.properties.name);
+            if (feature.properties && feature.properties.nombre_dis) {
+              layer.bindPopup(`<strong>nombre:</strong> ${feature.properties.nombre_dis || 'N/A'}<br>`);
             }
           }
-        });
+        });*/
+
+        const puntosDeInteresLayer2 = L.geoJSON(distritosData, {
+  style: () => ({
+    fillColor: 'black',
+    weight: 2,
+    color: '#cd3685',
+    fillOpacity: 0.5
+  }),
+  onEachFeature: (feature, layer) => {
+    if (feature.properties && feature.properties.nombre_dis) {
+      // Popup normal
+      layer.bindPopup(`<strong>Nombre:</strong> ${feature.properties.nombre_dis || 'N/A'}<br>`);
+
+      // Centroide aproximado
+      const center = layer.getBounds().getCenter();
+
+      // El "label" se agrega como parte del layer de distritos
+      const label = L.marker(center, {
+        icon: L.divIcon({
+          className: 'label-distrito',
+          html: `<div style="color:white; font-weight:bold; text-shadow: 1px 1px 2px black;">${feature.properties.nombre_dis}</div>`
+        }),
+        interactive: false // evita que interfiera con clics
+      });
+
+      // Vincular el marcador al polígono para que obedezca al control de capas
+      layer.on('add', () => {
+        map.addLayer(label);
+      });
+      layer.on('remove', () => {
+        map.removeLayer(label);
+      });
+    }
+  }
+});
+
       
         //  Control de capas
         const overlayLayers = {

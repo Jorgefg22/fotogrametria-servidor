@@ -176,6 +176,28 @@ exports.getDistritosCat = async (req, res) => {
 };
 
 
+exports.getDistritosAdm = async (req, res) => {
+  try {
+    const query = `SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, nombre_dis, st_area_sh, st_length_
+      FROM "limites_operativos".distrito_administrativo`;
+     
+      /*SELECT id, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom, codigo, codigo_otb, nombre, st_area_sh, st_length_
+      FROM "limites_operativos".Manzana*/
+    const result = await pool.query(query);
+    const features = result.rows.map(row => ({
+      type: "Feature",
+      geometry: JSON.parse(row.geom),
+      properties: { ...row }
+    }));
+    res.json({ type: "FeatureCollection", features });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar manzana' });
+  }
+};
+
+
+
 exports.getPresas = async (req, res) => {
   try {
     const query = `
