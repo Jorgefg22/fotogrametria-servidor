@@ -3,9 +3,8 @@ let map = L.map('map').setView([-17.403868804926827, -66.03924367573562], 13)
 L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   maxZoom: 20, // Nivel máximo de zoom
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], // Subdominios utilizados por Google para distribuir la carga
-  attribution: 'Map data ©2023 Google' // Atribución de los datos del mapa
+  attribution: 'Data SICAT-Predios 20/10/25' // Atribución de los datos del mapa
 }).addTo(map);
-
 
 var marker = L.marker([28.3949, 84.1240]).addTo(map);
 
@@ -25,9 +24,7 @@ function search() {
   // Convertir de UTM zona 19 Sur a WGS84
   var latLng = proj4(utmZone19S, wgs84, [easting, northing]);
 
-  /* Mostrar las coordenadas geográficas en la página web
-  document.getElementById('result').innerHTML = "Latitud: " + latLng[1].toFixed(14) +
-      "<br>Longitud: " + latLng[0].toFixed(14);*/
+  /* Mostrar las coordenadas geográficas en la página web*/
 
   map.setView([latLng[1].toFixed(14), latLng[0].toFixed(14)], 19);
   marker.setLatLng([latLng[1].toFixed(14), latLng[0].toFixed(14)]);
@@ -42,8 +39,6 @@ function addNametocircle() {
   let primerCaracter = usuario.charAt(0);
   textuser.innerHTML = primerCaracter;
 
-  console.log(primerCaracter);
-
   var role = document.getElementById('role').innerText;
   const div = document.getElementById('dropdown');
 
@@ -52,7 +47,6 @@ function addNametocircle() {
   } else {
     div.style.display = 'none';
   }
-
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -70,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
         row.innerHTML = `
         
             <td>${descarga.nombre_archivo}</td>
-          
             <td>${descarga.fecha_hora}</td>
             <td>${descarga.resultado}</td>
           `;
@@ -89,14 +82,16 @@ Promise.all([
   fetch('/leaflet/area_urbana.geojson').then(res => res.json()),
   fetch('/leaflet/lineaCota.geojson').then(res => res.json()),
   fetch('/geo/distritosadm').then(res => res.json()),
-  fetch('/geo/manzanos').then(res => res.json()), // 👈 añadimos manzanos
+  fetch('/geo/manzanos').then(res => res.json()),
   fetch('/geo/poligonos').then(res => res.json()),
   fetch('/geo/distritoscat').then(res => res.json()),
   fetch('/geo/vias24').then(res => res.json()),
   fetch('/geo/grilla24').then(res => res.json())
 ])
-.then(([areaUrbanaData, lineaCotaData, distritosData, manzanosData, poligonosData,distritoscatData,vias24Data,grilla24Data]) => {
-  poligonosDataGlobal = poligonosData
+.then(([areaUrbanaData, lineaCotaData, distritosData, manzanosData, poligonosData, distritoscatData, vias24Data, grilla24Data]) => {
+
+  poligonosDataGlobal = poligonosData;
+
   // Área Urbana
   const puntosDeInteresLayer = L.geoJSON(areaUrbanaData, {
     style: () => ({
@@ -106,7 +101,7 @@ Promise.all([
       fillOpacity: 0.5
     }),
     onEachFeature: (feature, layer) => {
-      if (feature.properties && feature.properties.name) {
+      if (feature.properties?.name) {
         layer.bindPopup(feature.properties.name);
       }
     }
@@ -125,110 +120,100 @@ Promise.all([
     }
   });
 
-  // Distritos
+  // Distritos administrativos
   const puntosDeInteresLayer2 = L.geoJSON(distritosData, {
-  style: () => ({
-    fillColor: 'black',
-    weight: 2,
-    color: '#cd3685',
-    fillOpacity: 0.5
-  }),
-  onEachFeature: (feature, layer) => {
-    if (feature.properties && feature.properties.nombre_dis) {
-      // Popup normal
-      layer.bindPopup(`<strong>Nombre:</strong> ${feature.properties.nombre_dis || 'N/A'}<br>`);
+    style: () => ({
+      fillColor: 'black',
+      weight: 2,
+      color: '#cd3685',
+      fillOpacity: 0.5
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties?.nombre_dis) {
+        layer.bindPopup(`<strong>Nombre:</strong> ${feature.properties.nombre_dis}`);
 
-      // Centroide aproximado
-      const center = layer.getBounds().getCenter();
+        const center = layer.getBounds().getCenter();
+        const label = L.marker(center, {
+          icon: L.divIcon({
+            className: 'label-distrito',
+            html: `<div style="color:white; font-weight:bold; text-shadow: 1px 1px 2px black;">
+              ${feature.properties.nombre_dis}
+            </div>`
+          }),
+          interactive: false
+        });
 
-      // El "label" se agrega como parte del layer de distritos
-      const label = L.marker(center, {
-        icon: L.divIcon({
-          className: 'label-distrito',
-          html: `<div style="color:white; font-weight:bold; text-shadow: 1px 1px 2px black;">${feature.properties.nombre_dis}</div>`
-        }),
-        interactive: false // evita que interfiera con clics
-      });
-
-      // Vincular el marcador al polígono para que obedezca al control de capas
-      layer.on('add', () => {
-        map.addLayer(label);
-      });
-      layer.on('remove', () => {
-        map.removeLayer(label);
-      });
+        layer.on('add', () => map.addLayer(label));
+        layer.on('remove', () => map.removeLayer(label));
+      }
     }
-  }
-});
+  });
 
   // Manzanos
   const manzanosLayer = L.geoJSON(manzanosData, {
     style: () => ({
-      fillColor: '#ffcc00', // Amarillo para distinguir
+      fillColor: '#ffcc00',
       weight: 1,
       color: '#333',
       fillOpacity: 0.6
     }),
     onEachFeature: (feature, layer) => {
       if (feature.properties) {
-        let popupContent = `<div><img src="/images/adt.png" width="300px" alt=""></div>
-        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
-        <strong>Cod Manzana:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
-       
+        const popupContent = `
+          <div><img src="/images/adt.png" width="300px" alt=""></div>
+          <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+          <strong>Cod Manzana:</strong> ${feature.properties.codigo || 'N/A'}</div>`;
         layer.bindPopup(popupContent);
       }
     }
   });
 
-  poligonosLayer = L.geoJSON(poligonosData, {
-  style: function (feature) {
-    return {
+  // Polígonos (activa por defecto)
+  const poligonosLayer = L.geoJSON(poligonosData, {
+    style: () => ({
       fillColor: '#ff540b',
       weight: 2,
       color: '#0d6efd',
       fillOpacity: 0.5
-    };
-  },
-  onEachFeature: function (feature, layer) {
-    if (feature.properties && feature.properties.id) {
-      layer.bindPopup(`
-        <div><img src="/images/adt.png" width="300px" alt=""></div>
-        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
-        <ul>
-          <li>Codigo Catastral: ${feature.properties.codigo_cat}</li>
-          <li>Numero de Inmueble: ${feature.properties.nro_inmueb}</li>
-          <li>Distrito Catastral: ${feature.properties.distrito_c}</li>
-          <li>Distrito Administrativo: ${feature.properties.distrito_a}</li>
-          <li>Numero de zona: ${feature.properties.zona}</li>
-        </ul>
-      `);
+    }),
+    onEachFeature: (feature, layer) => {
+      if (feature.properties?.id) {
+        layer.bindPopup(`
+          <div><img src="/images/adt.png" width="300px" alt=""></div>
+          <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+          <ul>
+            <li>Codigo Catastral: ${feature.properties.codigo_cat}</li>
+            <li>Numero de Inmueble: ${feature.properties.nro_inmueb}</li>
+            <li>Distrito Catastral: ${feature.properties.distrito_c}</li>
+            <li>Distrito Administrativo: ${feature.properties.distrito_a}</li>
+            <li>Numero de zona: ${feature.properties.zona}</li>
+          </ul>
+        `);
+      }
     }
-  }
-}).addTo(map); // 👈 esto la activa por defecto
+  }).addTo(map);
 
-
-
+  // Distritos catastrales
   const distirtosCatLayer = L.geoJSON(distritoscatData, {
     style: () => ({
-      fillColor: '#44df31', // Amarillo para distinguir
+      fillColor: '#44df31',
       weight: 1,
       color: '#333',
       fillOpacity: 0.6
     }),
     onEachFeature: (feature, layer) => {
       if (feature.properties) {
-        
         let popupContent = `
-        <div><img src="/images/adt.png" width="300px" alt=""></div>
-        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
-        <strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
-        popupContent += `<strong>Distrito cat:</strong> ${feature.properties.nombre || 'N/A'}`;
+          <div><img src="/images/adt.png" width="300px" alt=""></div>
+          <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+          <strong>Codigo:</strong> ${feature.properties.codigo || 'N/A'}<br>
+          <strong>Distrito cat:</strong> ${feature.properties.nombre || 'N/A'}</div>`;
         layer.bindPopup(popupContent);
       }
     }
   });
 
-  // grilla
+  // Grilla
   const grillaLayer = L.geoJSON(grilla24Data, {
     style: () => ({
       fillColor: 'black',
@@ -237,34 +222,34 @@ Promise.all([
       fillOpacity: 0.2
     }),
     onEachFeature: (feature, layer) => {
-      if (feature.properties && feature.properties.texto) {
-         layer.bindPopup(`<strong>nombre:</strong> ${feature.properties.texto || 'N/A'}<br>`);
+      if (feature.properties?.texto) {
+        layer.bindPopup(`<strong>nombre:</strong> ${feature.properties.texto}`);
       }
     }
   });
 
-  // vias
+  // Vías
   const viasLayer = L.geoJSON(vias24Data, {
     style: () => ({
-      fillColor: '#e034e9', // Amarillo para distinguir
+      fillColor: '#e034e9',
       weight: 1,
       color: '#333',
       fillOpacity: 0.6
     }),
     onEachFeature: (feature, layer) => {
       if (feature.properties) {
-        let popupContent = `<div><img src="/images/adt.png" width="300px" alt=""></div>
-        <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
-        <strong>Cod Manzana:</strong> ${feature.properties.codigo || 'N/A'}<br>`;
-       
+        const popupContent = `
+          <div><img src="/images/adt.png" width="300px" alt=""></div>
+          <div><h6>Gobierno Autonomo Municipal de Sacaba</h6>
+          <strong>Cod Manzana:</strong> ${feature.properties.codigo || 'N/A'}</div>`;
         layer.bindPopup(popupContent);
       }
     }
   });
 
-  // Control de capas
+  // Control de capas inicial
   const overlayLayers = {
-    'poligonos':poligonosLayer,
+    'poligonos': poligonosLayer,
     'Área Urbana': puntosDeInteresLayer,
     'Distritos': puntosDeInteresLayer2,
     'Límite Cota': puntosDeInteresLayercota,
@@ -273,10 +258,35 @@ Promise.all([
     'grillas ref.': grillaLayer,
     'vias ref': viasLayer
   };
- cargarCodigos();
-  L.control.layers(null, overlayLayers).addTo(map);
+
+  cargarCodigos();
+  const controlCapas = L.control.layers(null, overlayLayers).addTo(map);
+
+  // =======================
+  //   NUEVA CAPA GEOTIFF
+  // =======================
+  fetch("/leaflet/pendiente.tif") // 👉 cambia la ruta si está en otro lugar
+    .then(response => response.arrayBuffer())
+    .then(arrayBuffer => {
+      parseGeoraster(arrayBuffer).then(georaster => {
+        const tiffLayer = new GeoRasterLayer({
+          georaster: georaster,
+          opacity: 0.7,
+          resolution: 256
+        });
+
+        // Ajustar vista
+        map.fitBounds(tiffLayer.getBounds());
+
+        // Agregar al control de capas
+        overlayLayers["Pendientes"] = tiffLayer;
+        controlCapas.addOverlay(tiffLayer, "Pendientes");
+      });
+    })
+    .catch(err => console.error("Error cargando GeoTIFF:", err));   
 })
 .catch(error => console.error('Error cargando una de las capas GeoJSON:', error));
+
 
 
 
@@ -327,7 +337,6 @@ function search() {
     alert("No se encontró el código: " + codigo);
     return;
   }
-
   // Quitar highlight anterior
   if (highlightLayer) {
     map.removeLayer(highlightLayer);
@@ -361,7 +370,6 @@ function search() {
   // Abrir popup de highlight directamente
   highlightLayer.eachLayer(l => l.openPopup());
 }
-
 
 function cargarCodigos() {
   if (!poligonosDataGlobal) return;
