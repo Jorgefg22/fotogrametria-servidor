@@ -73,7 +73,7 @@ async function verifyAcces(role) {
     }
      if (role == "root" || role == "admin") {
       addBandejaEntrada();
-      addDistritos();
+      //addDistritos();
     } 
     if (role == "root" || role == "admin" || role == "editor") {
       
